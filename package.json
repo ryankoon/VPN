@@ -1,0 +1,23 @@
+{
+  "name": "vpn",
+  "version": "1.0.0",
+  "description": "A3 - CPEN 442",
+  "main": "app.js",
+  "dependencies": {
+    "restify": "^7.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryankoon/VPN.git"
+  },
+  "author": "Zoy Huang, Ryan Koon, Wendy Zhou",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ryankoon/VPN/issues"
+  },
+  "homepage": "https://github.com/ryankoon/VPN#readme"
+}
