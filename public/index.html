@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="script.js"></script>
+    <meta charset="UTF-8">
+    <title>VPN</title>
+</head>
+<body>
+<h1>VPN Connection</h1>
+<form action="/connect" method="post">
+    <div>
+        <label for="ipaddress">IP Address:</label>
+        <input type="text" id="ipaddress" name="ip">
+    </div>
+    <div>
+        <label for="port">Port:</label>
+        <input type="text" id="port" name="port">
+    </div>
+    <div>
+        <button type="submit" id="connect-btn">Connect</button>
+    </div>
+</form>
+
+<div>
+    <button id="continue-btn" onclick="proceed()">Continue</button>
+</div>
+</body>
+</html>
