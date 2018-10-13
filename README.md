@@ -18,5 +18,5 @@ run `npm start`
 For more information, see: https://electronjs.org/
   
 **Package app for distribution**  
-run `npm dist`  
+run `npm run dist`  
 For more information, see: https://github.com/electron-userland/electron-builder
