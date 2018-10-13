@@ -4,15 +4,18 @@
   "description": "A3 - CPEN 442",
   "main": "main.js",
   "dependencies": {
-    "electron": "^3.0.4",
     "restify": "^7.2.1"
   },
   "devDependencies": {
+    "electron": "^3.0.4",
+    "electron-builder": "^20.28.4",
     "eslint": "^5.7.0",
     "eslint-plugin-security": "^1.4.0"
   },
   "scripts": {
     "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

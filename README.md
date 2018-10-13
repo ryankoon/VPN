@@ -14,4 +14,9 @@ v10.12.0
 4. Visit `localhost:8080` to view the UI
 
 **Running in Election**  
-  run `npm start`
+run `npm start`
+For more information, see: https://electronjs.org/
+  
+**Package app for distribution**  
+run `npm dist`  
+For more information, see: https://github.com/electron-userland/electron-builder
