@@ -1,7 +1,6 @@
 const net = require('net');
 let client;
 
-//TODO: custom IP:Port
 function start(host, port) {
     if (client === undefined) {
         client = new net.Socket();
@@ -20,6 +19,8 @@ function start(host, port) {
         client.on('close', function () {
             console.log('Connection closed');
         });
+    } else {
+        console.error("The client connection must be started first.");
     }
 }
 
@@ -29,6 +30,8 @@ function send(data) {
 
         client.write(data);
         console.log(data);
+    } else {
+        console.error("The client connection must be started first.");
     }
 }
 
@@ -37,6 +40,8 @@ function stop() {
     if (client) {
         client.destroy();
         client = undefined;
+    } else {
+        console.error("No client connection has been started.");
     }
 }
 

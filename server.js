@@ -3,7 +3,6 @@ const net = require('net');
 //Single instance of server
 let server, socket;
 
-//TODO: custom IP:Port
 function start(host, port) {
     if (server === undefined) {
         server = net.createServer(listener => {
@@ -35,7 +34,7 @@ function start(host, port) {
         server.listen(port, host);
         console.log("Server is listening at " + host + ":" + port);
     } else {
-        console.error("Stop the server before starting a new instance.");
+        console.error("Stop the server before starting a new connection.");
     }
 }
 
