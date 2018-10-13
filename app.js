@@ -13,6 +13,13 @@ function proceed(req, res, next) {
     next();
 }
 
+/**
+ * Switches the application to the given mode provided that it is a valid {@link MODES mode}.
+ * This will stop existing connections.
+ * @param req
+ * @param res
+ * @param next
+ */
 function switchMode(req, res, next) {
     if (req.body && MODES[req.body] !== undefined) {
         stopConnections();
@@ -23,6 +30,12 @@ function switchMode(req, res, next) {
     next();
 }
 
+/**
+ * Used in client mode to connect to a server given the host and port.
+ * @param req - payload should contain {host: <host>, port: <port>}
+ * @param res
+ * @param next
+ */
 function connectToServer(req, res, next) {
     if (req.body && req.body.host && req.body.port) {
         let host = req.body.host;
@@ -33,6 +46,12 @@ function connectToServer(req, res, next) {
     next();
 }
 
+/**
+ * Used in server mode to listen for a client connection given the port.
+ * @param req - payload should contain {port: <port>>}
+ * @param res
+ * @param next
+ */
 function listenForClient(req, res, next) {
     if (req.body && req.body.port) {
         let port = req.body.port;
@@ -42,6 +61,13 @@ function listenForClient(req, res, next) {
     next();
 }
 
+
+/**
+ * Sends an encrypted message to the connected client/server provided that the authentication has been completed.
+ * @param req
+ * @param res
+ * @param next
+ */
 function sendMessage(req, res, next) {
     if (req.body && req.body.message) {
         let message = req.body.message;
@@ -57,6 +83,9 @@ function sendMessage(req, res, next) {
     next();
 }
 
+/**
+ * Stops the active connection.
+ */
 function stopConnections() {
     if (currentMode === MODES.SERVER) {
         VPNServer.stop();
@@ -65,7 +94,9 @@ function stopConnections() {
     }
 }
 
-
+/**
+ * Starts serving the UI to set up a connection.
+ */
 function serveUI() {
     UIServer.use(restify.plugins.queryParser());
     UIServer.use(restify.plugins.bodyParser());
