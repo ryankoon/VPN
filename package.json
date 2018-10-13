@@ -2,12 +2,17 @@
   "name": "vpn",
   "version": "1.0.0",
   "description": "A3 - CPEN 442",
-  "main": "app.js",
+  "main": "main.js",
   "dependencies": {
+    "electron": "^3.0.4",
     "restify": "^7.2.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^5.7.0",
+    "eslint-plugin-security": "^1.4.0"
+  },
   "scripts": {
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
