@@ -2,49 +2,21 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="styles.css">
-    <script src="script.js"></script>
     <meta charset="UTF-8">
     <title>VPN</title>
 </head>
 <body>
 <h1>VPN Connection</h1>
 
-<h2>Server</h2>
-<form action="/listenForClient" method="post">
-    <div>
-        <label for="serverPort">Port:</label>
-        <input type="text" id="serverPort" name="port">
-    </div>
-    <div>
-        <label for="secret">Secret:</label>
-        <input type="text" id="secret" name="port">
-    </div>
-    <div>
-        <button type="submit" class="connect-btn">Start server</button>
-    </div>
-</form>
+<div id="select"></div>
+<div id="content"></div>
+<div id="console"></div>
+<div id="container-step"></div>
 
-<h2>Client</h2>
-<form action="/connectToServer" method="post">
-    <div>
-        <label for="ipaddress">IP Address:</label>
-        <input type="text" id="ipaddress" name="ip">
-    </div>
-    <div>
-        <label for="port">Port:</label>
-        <input type="text" id="port" name="port">
-    </div>
-    <div>
-        <label for="clientSecret">Secret:</label>
-        <input type="text" id="clientSecret" name="port">
-    </div>
-    <div>
-        <button type="submit" class="connect-btn">Connect To Server</button>
-    </div>
-</form>
 
-<div>
-    <button id="continue-btn" onclick="proceed()">Continue</button>
-</div>
+<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+<script src="script.js"></script>
+
 </body>
 </html>

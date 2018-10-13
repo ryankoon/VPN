@@ -4,6 +4,8 @@
   "description": "A3 - CPEN 442",
   "main": "app.js",
   "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-react-app": "^3.1.2",
     "restify": "^7.2.1"
   },
   "devDependencies": {},
