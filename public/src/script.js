@@ -172,15 +172,15 @@ class ModeSelect extends React.Component {
         if (event.currentTarget.value === 'CLIENT MODE') {
             const cont = document.querySelector("#content");
             ReactDOM.render(e(ClientForm), cont);
-            const cons = document.querySelector("#console");
-            ReactDOM.render(e(MessageSend), cons);
         }
         if (event.currentTarget.value === 'SERVER MODE') {
             const cont = document.querySelector("#content");
             ReactDOM.render(e(ServerForm), cont);
-            const cons = document.querySelector("#console");
-            ReactDOM.render(e(MessageReceive), cons);
         }
+        const send = document.querySelector("#send");
+        ReactDOM.render(e(MessageSend), send);
+        const cons = document.querySelector("#console");
+        ReactDOM.render(e(MessageReceive), cons);
     }
 
     render() {

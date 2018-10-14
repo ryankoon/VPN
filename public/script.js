@@ -283,15 +283,15 @@ var ModeSelect = function (_React$Component3) {
             if (event.currentTarget.value === 'CLIENT MODE') {
                 var cont = document.querySelector("#content");
                 ReactDOM.render(e(ClientForm), cont);
-                var cons = document.querySelector("#console");
-                ReactDOM.render(e(MessageSend), cons);
             }
             if (event.currentTarget.value === 'SERVER MODE') {
                 var _cont = document.querySelector("#content");
                 ReactDOM.render(e(ServerForm), _cont);
-                var _cons = document.querySelector("#console");
-                ReactDOM.render(e(MessageReceive), _cons);
             }
+            var send = document.querySelector("#send");
+            ReactDOM.render(e(MessageSend), send);
+            var cons = document.querySelector("#console");
+            ReactDOM.render(e(MessageReceive), cons);
         }
     }, {
         key: "render",
