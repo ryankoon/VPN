@@ -1,4 +1,6 @@
 const net = require('net');
+const App = require('./app.js');
+
 let client;
 
 function start(host, port) {
@@ -14,7 +16,10 @@ function start(host, port) {
             });
 
             client.on('data', data => {
-                console.log("Client received: " + data);
+                let ws = App.getWebSocket();
+                if (ws) {
+                    ws.send("Client received: " + data);
+                }
                 //TODO: decrypt data
             });
 

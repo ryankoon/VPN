@@ -1,11 +1,22 @@
 const restify = require('restify');
 const VPNServer = require('./server.js');
 const VPNClient = require('./client.js');
+const WSServer = require("ws").Server;
 
 const UIServer = restify.createServer();
+const WebSocketServer = new WSServer({server: UIServer.server});
+let WebSocket;
+WebSocketServer.on('connection', socket => {
+    WebSocket = socket;
+});
+
 const MODES = {SERVER: "SERVER", CLIENT: "CLIENT"};
 
 let currentMode;
+
+function getWebSocket() {
+    return WebSocket;
+}
 
 function proceed(req, res, next) {
     //TODO: Allow stepping
@@ -103,7 +114,7 @@ function sendMessage(req, res, next) {
 
         if (currentMode === MODES.SERVER) {
             sendMessageHandler(res, VPNServer.send(message));
-        } else if (currentMode === MODES.SERVER) {
+        } else if (currentMode === MODES.CLIENT) {
             sendMessageHandler(res, VPNClient.send(message));
         } else {
             console.error("Invalid mode: " + currentMode);
@@ -166,4 +177,4 @@ function serveUI() {
 serveUI();
 
 //Exports
-module.exports.MODES = MODES;
+module.exports.getWebSocket = getWebSocket;

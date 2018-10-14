@@ -130,20 +130,22 @@ class ClientForm extends React.Component {
                 function (response) {
                     if (response.status !== 200) {
                         console.log("ERROR");
-                        // return;
-                    }
-                    // PARSE
-                    response.json()
-                        .then(
-                            function (data) {
-                                if (data.code === "ECONNREFUSED") {
-                                    //TODO: Indicate in UI that server is not available
-                                    alert("The server is unavailable. Ensure that the server is running.")
-                                } else {
-                                    console.log(data);
+                        // PARSE
+                        response.json()
+                            .then(
+                                function (data) {
+                                    if (data.code === "ECONNREFUSED") {
+                                        //TODO: Indicate in UI that server is not available
+                                        alert("The server is unavailable. Ensure that the server is running.")
+                                    } else {
+                                        console.log(data);
+                                    }
                                 }
-                            }
-                        )
+                            )
+                            .catch(err => {
+                                console.log(err);
+                            })
+                    }
                 }
             )
             .catch(
@@ -267,34 +269,38 @@ class MessageSend extends React.Component {
     }
 
     handleSubmit(event) {
-        console.log("message=" + this.state.Message);
-        fetch('./sendMessage', {
-            method: 'post',
-            headers: {
-                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-            },
-            body: "message=" + this.state.Message
-        })
-            .then(
-                function (response) {
-                    if (response.status !== 200) {
-                        console.log("ERROR");
-                        return;
-                    }
-                    // PARSE
-                    response.json().then(
-                        function (data) {
-                            console.log(data);
+        if (this.state.Message && this.state.Message.length > 0) {
+            console.log("message=" + this.state.Message);
+            fetch('./sendMessage', {
+                method: 'post',
+                headers: {
+                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                body: "message=" + this.state.Message
+            })
+                .then(
+                    function (response) {
+                        if (response.status !== 200) {
+                            console.log("ERROR");
+                            // PARSE
+                            response.json()
+                                .then(
+                                    function (data) {
+                                        console.log(data);
+                                    })
+                                .catch(err => {
+                                    console.log(err);
+                                });
                         }
-                    )
-                }
-            )
-            .catch(
-                function (err) {
-                    console.log("Fetch Error :-S", err);
-                }
-            );
-        this.setState({Message: ''});
+                    }
+                )
+                .catch(
+                    function (err) {
+                        console.log("Fetch Error :-S", err);
+                    }
+                );
+            this.setState({Message: ''});
+        }
         event.preventDefault();
     }
 
@@ -318,50 +324,21 @@ class MessageReceive extends React.Component {
         super(props);
 
         this.state = {
-            Message: ''
+            MessageReceived: 'None'
         };
-        this.handleSubmit = this.handleSubmit.bind(this);
-    }
 
-    handleMessageChange(event) {
-        this.setState({Message: event.target.value});
-    }
+        console.log("setting up web socket.");
+        let socket = new WebSocket('ws://localhost:8080');
 
-    handleSubmit(event) {
-        console.log("message=" + this.state.Message);
-        fetch('./sendMessage', {
-            method: 'post',
-            headers: {
-                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-            },
-            body: "message=" + this.state.Message
-        })
-            .then(
-                function (response) {
-                    if (response.status !== 200) {
-                        console.log("ERROR");
-                        return;
-                    }
-                    // PARSE
-                    response.json().then(
-                        function (data) {
-                            console.log(data);
-                        }
-                    )
-                }
-            )
-            .catch(
-                function (err) {
-                    console.log("Fetch Error :-S", err);
-                }
-            );
-        this.setState({Message: ''});
-        event.preventDefault();
+        socket.addEventListener('message', event => {
+            console.log('Websocket message: ', event.data);
+            this.setState({MessageReceived: event.data});
+        });
     }
 
     render() {
         return (
-            <div>{this.state.Message}</div>
+            <div>{this.state.MessageReceived}</div>
         )
     }
 }

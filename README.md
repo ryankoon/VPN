@@ -11,7 +11,8 @@ v10.12.0
 1. Get the latest version of Node.js (v10.12.0)
 2. Update NPM (see above)
 3. Run `npm install`
-4. Visit `localhost:8080` to view the UI
+4. Compile UI by running PowerShell script `public/compile.ps1`
+5. Visit `localhost:8080` to view the UI
 
 **Running in Election**  
 run `npm start`

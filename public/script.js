@@ -172,17 +172,18 @@ var ClientForm = function (_React$Component2) {
             }).then(function (response) {
                 if (response.status !== 200) {
                     console.log("ERROR");
-                    // return;
+                    // PARSE
+                    response.json().then(function (data) {
+                        if (data.code === "ECONNREFUSED") {
+                            //TODO: Indicate in UI that server is not available
+                            alert("The server is unavailable. Ensure that the server is running.");
+                        } else {
+                            console.log(data);
+                        }
+                    }).catch(function (err) {
+                        console.log(err);
+                    });
                 }
-                // PARSE
-                response.json().then(function (data) {
-                    if (data.code === "ECONNREFUSED") {
-                        //TODO: Indicate in UI that server is not available
-                        alert("The server is unavailable. Ensure that the server is running.");
-                    } else {
-                        console.log(data);
-                    }
-                });
             }).catch(function (err) {
                 console.log("Fetch Error :-S", err);
             });
@@ -365,26 +366,29 @@ var MessageSend = function (_React$Component4) {
     }, {
         key: "handleSubmit",
         value: function handleSubmit(event) {
-            console.log("message=" + this.state.Message);
-            fetch('./sendMessage', {
-                method: 'post',
-                headers: {
-                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-                },
-                body: "message=" + this.state.Message
-            }).then(function (response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(function (data) {
-                    console.log(data);
+            if (this.state.Message && this.state.Message.length > 0) {
+                console.log("message=" + this.state.Message);
+                fetch('./sendMessage', {
+                    method: 'post',
+                    headers: {
+                        "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
+                    body: "message=" + this.state.Message
+                }).then(function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR");
+                        // PARSE
+                        response.json().then(function (data) {
+                            console.log(data);
+                        }).catch(function (err) {
+                            console.log(err);
+                        });
+                    }
+                }).catch(function (err) {
+                    console.log("Fetch Error :-S", err);
                 });
-            }).catch(function (err) {
-                console.log("Fetch Error :-S", err);
-            });
-            this.setState({ Message: '' });
+                this.setState({ Message: '' });
+            }
             event.preventDefault();
         }
     }, {
@@ -420,49 +424,26 @@ var MessageReceive = function (_React$Component5) {
         var _this5 = _possibleConstructorReturn(this, (MessageReceive.__proto__ || Object.getPrototypeOf(MessageReceive)).call(this, props));
 
         _this5.state = {
-            Message: ''
+            MessageReceived: 'None'
         };
-        _this5.handleSubmit = _this5.handleSubmit.bind(_this5);
+
+        console.log("setting up web socket.");
+        var socket = new WebSocket('ws://localhost:8080');
+
+        socket.addEventListener('message', function (event) {
+            console.log('Websocket message: ', event.data);
+            _this5.setState({ MessageReceived: event.data });
+        });
         return _this5;
     }
 
     _createClass(MessageReceive, [{
-        key: "handleMessageChange",
-        value: function handleMessageChange(event) {
-            this.setState({ Message: event.target.value });
-        }
-    }, {
-        key: "handleSubmit",
-        value: function handleSubmit(event) {
-            console.log("message=" + this.state.Message);
-            fetch('./sendMessage', {
-                method: 'post',
-                headers: {
-                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-                },
-                body: "message=" + this.state.Message
-            }).then(function (response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(function (data) {
-                    console.log(data);
-                });
-            }).catch(function (err) {
-                console.log("Fetch Error :-S", err);
-            });
-            this.setState({ Message: '' });
-            event.preventDefault();
-        }
-    }, {
         key: "render",
         value: function render() {
             return React.createElement(
                 "div",
                 null,
-                this.state.Message
+                this.state.MessageReceived
             );
         }
     }]);

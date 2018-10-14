@@ -1,4 +1,5 @@
 const net = require('net');
+const App = require('./app.js');
 
 //Single instance of server
 let server, socket;
@@ -13,7 +14,10 @@ function start(host, port) {
                 console.log("Server is connected to client.");
 
                 listener.on('data', data => {
-                    console.log("Server received: " + data);
+                    let ws = App.getWebSocket();
+                    if (ws) {
+                        ws.send("Server received: " + data);
+                    }
                     //TODO: decrypt data
                 });
             });
