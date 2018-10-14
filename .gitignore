@@ -1,3 +1,4 @@
 node_modules
 .idea
 compile.ps1
+package-lock.json
