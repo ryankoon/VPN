@@ -1,7 +1,8 @@
+/* eslint-disable no-undef */
 window.addEventListener("load", setup);
 const e = React.createElement;
 
-function setup() { 
+function setup() {
     const select = document.querySelector("#select");
     ReactDOM.render(e(ModeSelect), select);
     const stepContainer = document.querySelector("#container-step");
@@ -16,15 +17,21 @@ class ServerForm extends React.Component {
         this.state = {
             Port: "",
             Secret: ""
-        }
+        };
 
         this.handlePortChange = this.handlePortChange.bind(this);
         this.handleSecretChange = this.handleSecretChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handlePortChange(event) {this.setState({Port: event.target.value});}
-    handleSecretChange(event) {this.setState({Secret: event.target.value});}
+    handlePortChange(event) {
+        this.setState({Port: event.target.value});
+    }
+
+    handleSecretChange(event) {
+        this.setState({Secret: event.target.value});
+    }
+
     handleSubmit(event) {
         console.log('port=' + this.state.Port);
         fetch('./serve', {
@@ -34,29 +41,28 @@ class ServerForm extends React.Component {
             },
             body: 'port=' + this.state.Port
         })
-        /* NO RESPONSE EXPECTED
-        .then(
-            function(response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(
-                    function(data) {
-                        console.log(data);
+            .then(
+                function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR");
+                        return;
                     }
-                )
-            }
-        )
-        .catch(
-            function(err) {
-                console.log("Fetch Error :-S", err);
-            }
-        )*/
-        setMode("SERVER");
+                    // PARSE
+                    response.json().then(
+                        function (data) {
+                            console.log(data);
+                        }
+                    )
+                }
+            )
+            .catch(
+                function (err) {
+                    console.log("Fetch Error :-S", err);
+                }
+            );
         event.preventDefault();
     }
+
     render() {
         return (
             <div>
@@ -64,13 +70,17 @@ class ServerForm extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <div>
                         <label htmlFor="serverPort">Port:</label>
-                        <input id="serverPort" type="text" placeholder="Server Port" value={this.state.Port} onChange={this.handlePortChange}/>
+                        <input id="serverPort" type="text" placeholder="Server Port" value={this.state.Port}
+                               onChange={this.handlePortChange}/>
                     </div>
                     <div>
                         <label htmlFor="serverSecret">Secret:</label>
-                        <input id="serverSecret" type="text" placeholder="Secret" value={this.state.Secret} onChange={this.handleSecretChange}/>
+                        <input id="serverSecret" type="text" placeholder="Secret" value={this.state.Secret}
+                               onChange={this.handleSecretChange}/>
                     </div>
                     <div>
+                        {/*TODO: Disable this button until stop server button is clicked*/}
+                        {/*TODO: Stop server button/mechanism*/}
                         <button type="submit">Start server</button>
                     </div>
                 </form>
@@ -87,7 +97,7 @@ class ClientForm extends React.Component {
             IP: "",
             Port: "",
             Secret: ""
-        }
+        };
 
         this.handleIPChange = this.handleIPChange.bind(this);
         this.handlePortChange = this.handlePortChange.bind(this);
@@ -95,9 +105,18 @@ class ClientForm extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleIPChange(event) {this.setState({IP: event.target.value});}
-    handlePortChange(event) {this.setState({Port: event.target.value});}
-    handleSecretChange(event) {this.setState({Secret: event.target.value});}
+    handleIPChange(event) {
+        this.setState({IP: event.target.value});
+    }
+
+    handlePortChange(event) {
+        this.setState({Port: event.target.value});
+    }
+
+    handleSecretChange(event) {
+        this.setState({Secret: event.target.value});
+    }
+
     handleSubmit(event) {
         console.log("host=" + this.state.IP + "&port=" + this.state.Port);
         fetch('./connect', {
@@ -107,27 +126,31 @@ class ClientForm extends React.Component {
             },
             body: "host=" + this.state.IP + "&port=" + this.state.Port
         })
-        /* NO RESPONSE EXPECTED
-        .then(
-            function(response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(
-                    function(data) {
-                        console.log(data);
+            .then(
+                function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR");
+                        // return;
                     }
-                )
-            }
-        )
-        .catch(
-            function(err) {
-                console.log("Fetch Error :-S", err);
-            }
-        )*/
-        setMode("CLIENT");
+                    // PARSE
+                    response.json()
+                        .then(
+                            function (data) {
+                                if (data.code === "ECONNREFUSED") {
+                                    //TODO: Indicate in UI that server is not available
+                                    alert("The server is unavailable. Ensure that the server is running.")
+                                } else {
+                                    console.log(data);
+                                }
+                            }
+                        )
+                }
+            )
+            .catch(
+                function (err) {
+                    console.log("Fetch Error :-S", err);
+                }
+            );
         event.preventDefault();
     }
 
@@ -138,15 +161,18 @@ class ClientForm extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <div>
                         <label htmlFor="ipaddress">IP Address: </label>
-                        <input id="ipaddress" type="text" placeholder="IP Address" value={this.state.IP} onChange={this.handleIPChange}/>
+                        <input id="ipaddress" type="text" placeholder="IP Address" value={this.state.IP}
+                               onChange={this.handleIPChange}/>
                     </div>
                     <div>
                         <label htmlFor="port">Port: </label>
-                        <input id="port" type="text" placeholder="Port" value={this.state.Port} onChange={this.handlePortChange}/>
+                        <input id="port" type="text" placeholder="Port" value={this.state.Port}
+                               onChange={this.handlePortChange}/>
                     </div>
                     <div>
                         <label htmlFor="clientSecret">Secret:</label>
-                        <input id="clientSecret" type="text" placeholder="Secret" value={this.state.Secret} onChange={this.handleSecretChange}/>
+                        <input id="clientSecret" type="text" placeholder="Secret" value={this.state.Secret}
+                               onChange={this.handleSecretChange}/>
                     </div>
                     <div>
                         <button type="submit">Connect To Server</button>
@@ -163,19 +189,34 @@ class ModeSelect extends React.Component {
 
         this.state = {
             mode: ''
-        }
+        };
         this.handleModeChange = this.handleModeChange.bind(this);
     }
-    
+
     handleModeChange(event) {
-        this.setState({mode: event.currentTarget.value})
-        if (event.currentTarget.value === 'CLIENT MODE') {
-            const cont = document.querySelector("#content");
-            ReactDOM.render(e(ClientForm), cont);
+        let mode = event.currentTarget.value;
+        this.setState({mode: event.currentTarget.value});
+        if (mode === 'CLIENT MODE') {
+            setMode("CLIENT")
+                .then(() => {
+                    const cont = document.querySelector("#content");
+                    ReactDOM.render(e(ClientForm), cont);
+                })
+                .catch(err => {
+                    //TODO: display error in UI
+                    console.log(err);
+                })
         }
-        if (event.currentTarget.value === 'SERVER MODE') {
-            const cont = document.querySelector("#content");
-            ReactDOM.render(e(ServerForm), cont);
+        if (mode === 'SERVER MODE') {
+            setMode("SERVER")
+                .then(() => {
+                    const cont = document.querySelector("#content");
+                    ReactDOM.render(e(ServerForm), cont);
+                })
+                .catch(err => {
+                    //TODO: display error in UI
+                    console.log(err);
+                })
         }
         const send = document.querySelector("#send");
         ReactDOM.render(e(MessageSend), send);
@@ -189,7 +230,7 @@ class ModeSelect extends React.Component {
                 <h3>{this.state.mode}</h3>
                 <div onChange={this.handleIPChange}>
                     <label htmlFor="client">Client</label>
-                    <input 
+                    <input
                         id="client"
                         type="radio"
                         value="CLIENT MODE"
@@ -197,10 +238,10 @@ class ModeSelect extends React.Component {
                         onChange={this.handleModeChange}
                     />
                     <label htmlFor="server">Server</label>
-                    <input 
+                    <input
                         id="server"
                         type="radio"
-                        value="SERVER MODE" 
+                        value="SERVER MODE"
                         checked={this.state.mode === 'SERVER MODE'}
                         onChange={this.handleModeChange}
                     />
@@ -216,12 +257,15 @@ class MessageSend extends React.Component {
 
         this.state = {
             Message: ''
-        }
+        };
         this.handleMessageChange = this.handleMessageChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleMessageChange(event) {this.setState({Message: event.target.value});}
+    handleMessageChange(event) {
+        this.setState({Message: event.target.value});
+    }
+
     handleSubmit(event) {
         console.log("message=" + this.state.Message);
         fetch('./sendMessage', {
@@ -231,26 +275,25 @@ class MessageSend extends React.Component {
             },
             body: "message=" + this.state.Message
         })
-        /* NO RESPONSE EXPECTED
-        .then(
-            function(response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(
-                    function(data) {
-                        console.log(data);
+            .then(
+                function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR");
+                        return;
                     }
-                )
-            }
-        )
-        .catch(
-            function(err) {
-                console.log("Fetch Error :-S", err);
-            }
-        )*/
+                    // PARSE
+                    response.json().then(
+                        function (data) {
+                            console.log(data);
+                        }
+                    )
+                }
+            )
+            .catch(
+                function (err) {
+                    console.log("Fetch Error :-S", err);
+                }
+            );
         this.setState({Message: ''});
         event.preventDefault();
     }
@@ -259,7 +302,8 @@ class MessageSend extends React.Component {
         return (
             <div>
                 <form onSubmit={this.handleSubmit}>
-                    <textarea rows="4" cols="50" name="message" value={this.state.Message} onChange={this.handleMessageChange}>
+                    <textarea rows="4" cols="50" name="message" value={this.state.Message}
+                              onChange={this.handleMessageChange}>
                         
                     </textarea>
                     <button type="submit">Send Message</button>
@@ -275,11 +319,14 @@ class MessageReceive extends React.Component {
 
         this.state = {
             Message: ''
-        }
+        };
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleMessageChange(event) {this.setState({Message: event.target.value});}
+    handleMessageChange(event) {
+        this.setState({Message: event.target.value});
+    }
+
     handleSubmit(event) {
         console.log("message=" + this.state.Message);
         fetch('./sendMessage', {
@@ -289,25 +336,25 @@ class MessageReceive extends React.Component {
             },
             body: "message=" + this.state.Message
         })
-        .then(
-            function(response) {
-                if (response.status !== 200) {
-                    console.log("ERROR");
-                    return;
-                }
-                // PARSE
-                response.json().then(
-                    function(data) {
-                        console.log(data);
+            .then(
+                function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR");
+                        return;
                     }
-                )
-            }
-        )
-        .catch(
-            function(err) {
-                console.log("Fetch Error :-S", err);
-            }
-        )
+                    // PARSE
+                    response.json().then(
+                        function (data) {
+                            console.log(data);
+                        }
+                    )
+                }
+            )
+            .catch(
+                function (err) {
+                    console.log("Fetch Error :-S", err);
+                }
+            );
         this.setState({Message: ''});
         event.preventDefault();
     }
@@ -330,14 +377,12 @@ class Step extends React.Component {
 }
 
 function setMode(mode) {
-    fetch('./mode', {
+    return fetch('./mode', {
         method: 'post',
-        headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-        },
-        body: mode
-    })
+        body: JSON.stringify({"mode": mode})
+    });
 }
+
 /*
 function proceed() {
     const httpReq = new XMLHttpRequest();

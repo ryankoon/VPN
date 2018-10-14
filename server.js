@@ -4,61 +4,59 @@ const net = require('net');
 let server, socket;
 
 function start(host, port) {
-    if (server === undefined) {
-        server = net.createServer(listener => {
-            socket = listener;
+    return new Promise((resolve, reject) => {
+        if (server === undefined) {
+            server = net.createServer(listener => {
+                socket = listener;
 
-            // TODO: Authentication on connection
-            console.log("Server is connected to client.");
+                // TODO: Authentication on connection
+                console.log("Server is connected to client.");
 
-            listener.on('data', data => {
-                //TODO: decrypt data
+                listener.on('data', data => {
+                    console.log("Server received: " + data);
+                    //TODO: decrypt data
+                });
             });
 
-        });
+            server.on('close', function () {
+                server = undefined;
+                socket = undefined;
+                console.log("Server closed.")
+            });
 
-        server.on('error', (e) => {
-            if (e.code === 'EADDRINUSE') {
-                console.log('Address in use, retrying...');
-                setTimeout(() => {
-                    server.close();
-                    server.listen(port, host);
-                }, 1000);
-            } else {
-                console.log("Server Error");
-                console.log(e);
-            }
-        });
+            server.on('error', e => {
+                reject(e);
+            });
 
-
-        server.listen(port, host);
-        console.log("Server is listening at " + host + ":" + port);
-    } else {
-        console.error("Stop the server before starting a new connection.");
-    }
+            server.listen(port, host, resolve);
+        } else {
+            reject(new Error("Stop the server before starting a new connection."));
+        }
+    });
 }
 
 
 function send(data) {
-    if (socket) {
-        //TODO: encrypt data
+    return new Promise((resolve, reject) => {
+        if (socket) {
+            //TODO: encrypt data
 
-        socket.write(data);
-        console.log(data);
-    } else {
-        console.error("The server must be started first.");
-    }
+            socket.write(data, resolve);
+        } else {
+            reject(new Error("The server must be connected to a client first."));
+        }
+    });
 }
 
 function stop() {
-    if (server) {
-        socket.close();
-        server.close();
-        server = undefined;
-        socket = undefined;
-    } else {
-        console.error("The server is not running. ");
-    }
+    return new Promise(resolve => {
+        if (server) {
+            console.log("Closing server...");
+            server.close(resolve);
+        } else {
+            resolve();
+        }
+    });
 }
 
 //Exports

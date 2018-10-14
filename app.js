@@ -3,9 +3,9 @@ const VPNServer = require('./server.js');
 const VPNClient = require('./client.js');
 
 const UIServer = restify.createServer();
-const MODES = {SERVER: "server", CLIENT: "client"};
+const MODES = {SERVER: "SERVER", CLIENT: "CLIENT"};
 
-let currentMode = "server";
+let currentMode;
 
 function proceed(req, res, next) {
     //TODO: Allow stepping
@@ -21,11 +21,24 @@ function proceed(req, res, next) {
  * @param next
  */
 function switchMode(req, res, next) {
-    if (req.body && MODES[req.body] !== undefined) {
-        stopConnections();
-        currentMode = MODES[req.body];
+    let body;
+    console.log(req.body);
+    try {
+        body = JSON.parse(req.body);
+    } catch (e) {
+        console.log(e);
+    }
+    if (body && MODES[body.mode] !== undefined) {
+        stopConnections()
+            .then(() => {
+                currentMode = MODES[body.mode];
+                res.send(200, currentMode);
+            })
+            .catch(err => {
+                res.send(500, err);
+            });
     } else {
-        res.send(new Error("Valid modes are: [" + Object.values(MODES).join(", ") + "]"));
+        res.send(400, "Valid modes are: [" + Object.values(MODES).join(", ") + "]");
     }
     next();
 }
@@ -41,14 +54,22 @@ function connectToServer(req, res, next) {
         let host = req.body.host;
         let port = req.body.port;
 
-        VPNClient.start(host, port);
+        VPNClient.start(host, port)
+            .then(() => {
+                res.send(200);
+            })
+            .catch(err => {
+                res.send(500, err);
+            });
+    } else {
+        res.send(400, "Invalid request. Payload should be {host: <host>, port: <port>}");
     }
     next();
 }
 
 /**
  * Used in server mode to listen for a client connection given the port.
- * @param req - payload should contain {port: <port>>}
+ * @param req - payload should contain {port: <port>}
  * @param res
  * @param next
  */
@@ -56,7 +77,15 @@ function listenForClient(req, res, next) {
     if (req.body && req.body.port) {
         let port = req.body.port;
 
-        VPNServer.start("0.0.0.0", port);
+        VPNServer.start("0.0.0.0", port)
+            .then(() => {
+                res.send(200);
+            })
+            .catch(err => {
+                res.send(500, err);
+            });
+    } else {
+        res.send(400, "Invalid request. Payload should be {port: <port>}");
     }
     next();
 }
@@ -73,14 +102,27 @@ function sendMessage(req, res, next) {
         let message = req.body.message;
 
         if (currentMode === MODES.SERVER) {
-            VPNServer.send(message);
+            sendMessageHandler(res, VPNServer.send(message));
         } else if (currentMode === MODES.SERVER) {
-            VPNClient.send(message);
+            sendMessageHandler(res, VPNClient.send(message));
         } else {
             console.error("Invalid mode: " + currentMode);
+            res.send(500, "Invalid mode. Please restart the application.");
         }
+    } else {
+        res.send(400);
     }
     next();
+}
+
+function sendMessageHandler(response, promise) {
+    promise
+        .then(() => {
+            response.send(200);
+        })
+        .catch(err => {
+            response.send(500, err);
+        });
 }
 
 /**
@@ -88,10 +130,14 @@ function sendMessage(req, res, next) {
  */
 function stopConnections() {
     if (currentMode === MODES.SERVER) {
-        VPNServer.stop();
-    } else if (currentMode === MODES.SERVER) {
-        VPNClient.stop();
+        return VPNServer.stop();
+    } else if (currentMode === MODES.CLIENT) {
+        return VPNClient.stop();
+    } else if (currentMode === undefined) {
+        return Promise.resolve();
     }
+
+    return Promise.reject(new Error("Invalid Mode"));
 }
 
 /**
@@ -107,7 +153,7 @@ function serveUI() {
     UIServer.post('/connect', connectToServer);
     UIServer.post('/serve', listenForClient);
     UIServer.post('/sendMessage', sendMessage);
-    UIServer.get('/\*', restify.plugins.serveStatic({
+    UIServer.get('/*', restify.plugins.serveStatic({
         directory: './public',
         default: 'index.html'
     }));
@@ -118,3 +164,6 @@ function serveUI() {
 }
 
 serveUI();
+
+//Exports
+module.exports.MODES = MODES;

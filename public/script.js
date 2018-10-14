@@ -6,6 +6,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+/* eslint-disable no-undef */
 window.addEventListener("load", setup);
 var e = React.createElement;
 
@@ -55,28 +56,18 @@ var ServerForm = function (_React$Component) {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
                 body: 'port=' + this.state.Port
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    console.log("ERROR");
+                    return;
+                }
+                // PARSE
+                response.json().then(function (data) {
+                    console.log(data);
+                });
+            }).catch(function (err) {
+                console.log("Fetch Error :-S", err);
             });
-            /* NO RESPONSE EXPECTED
-            .then(
-                function(response) {
-                    if (response.status !== 200) {
-                        console.log("ERROR");
-                        return;
-                    }
-                    // PARSE
-                    response.json().then(
-                        function(data) {
-                            console.log(data);
-                        }
-                    )
-                }
-            )
-            .catch(
-                function(err) {
-                    console.log("Fetch Error :-S", err);
-                }
-            )*/
-            setMode("SERVER");
             event.preventDefault();
         }
     }, {
@@ -101,7 +92,8 @@ var ServerForm = function (_React$Component) {
                             { htmlFor: "serverPort" },
                             "Port:"
                         ),
-                        React.createElement("input", { id: "serverPort", type: "text", placeholder: "Server Port", value: this.state.Port, onChange: this.handlePortChange })
+                        React.createElement("input", { id: "serverPort", type: "text", placeholder: "Server Port", value: this.state.Port,
+                            onChange: this.handlePortChange })
                     ),
                     React.createElement(
                         "div",
@@ -111,7 +103,8 @@ var ServerForm = function (_React$Component) {
                             { htmlFor: "serverSecret" },
                             "Secret:"
                         ),
-                        React.createElement("input", { id: "serverSecret", type: "text", placeholder: "Secret", value: this.state.Secret, onChange: this.handleSecretChange })
+                        React.createElement("input", { id: "serverSecret", type: "text", placeholder: "Secret", value: this.state.Secret,
+                            onChange: this.handleSecretChange })
                     ),
                     React.createElement(
                         "div",
@@ -176,28 +169,23 @@ var ClientForm = function (_React$Component2) {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
                 body: "host=" + this.state.IP + "&port=" + this.state.Port
-            });
-            /* NO RESPONSE EXPECTED
-            .then(
-                function(response) {
-                    if (response.status !== 200) {
-                        console.log("ERROR");
-                        return;
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    console.log("ERROR");
+                    // return;
+                }
+                // PARSE
+                response.json().then(function (data) {
+                    if (data.code === "ECONNREFUSED") {
+                        //TODO: Indicate in UI that server is not available
+                        alert("The server is unavailable. Ensure that the server is running.");
+                    } else {
+                        console.log(data);
                     }
-                    // PARSE
-                    response.json().then(
-                        function(data) {
-                            console.log(data);
-                        }
-                    )
-                }
-            )
-            .catch(
-                function(err) {
-                    console.log("Fetch Error :-S", err);
-                }
-            )*/
-            setMode("CLIENT");
+                });
+            }).catch(function (err) {
+                console.log("Fetch Error :-S", err);
+            });
             event.preventDefault();
         }
     }, {
@@ -222,7 +210,8 @@ var ClientForm = function (_React$Component2) {
                             { htmlFor: "ipaddress" },
                             "IP Address: "
                         ),
-                        React.createElement("input", { id: "ipaddress", type: "text", placeholder: "IP Address", value: this.state.IP, onChange: this.handleIPChange })
+                        React.createElement("input", { id: "ipaddress", type: "text", placeholder: "IP Address", value: this.state.IP,
+                            onChange: this.handleIPChange })
                     ),
                     React.createElement(
                         "div",
@@ -232,7 +221,8 @@ var ClientForm = function (_React$Component2) {
                             { htmlFor: "port" },
                             "Port: "
                         ),
-                        React.createElement("input", { id: "port", type: "text", placeholder: "Port", value: this.state.Port, onChange: this.handlePortChange })
+                        React.createElement("input", { id: "port", type: "text", placeholder: "Port", value: this.state.Port,
+                            onChange: this.handlePortChange })
                     ),
                     React.createElement(
                         "div",
@@ -242,7 +232,8 @@ var ClientForm = function (_React$Component2) {
                             { htmlFor: "clientSecret" },
                             "Secret:"
                         ),
-                        React.createElement("input", { id: "clientSecret", type: "text", placeholder: "Secret", value: this.state.Secret, onChange: this.handleSecretChange })
+                        React.createElement("input", { id: "clientSecret", type: "text", placeholder: "Secret", value: this.state.Secret,
+                            onChange: this.handleSecretChange })
                     ),
                     React.createElement(
                         "div",
@@ -279,14 +270,25 @@ var ModeSelect = function (_React$Component3) {
     _createClass(ModeSelect, [{
         key: "handleModeChange",
         value: function handleModeChange(event) {
+            var mode = event.currentTarget.value;
             this.setState({ mode: event.currentTarget.value });
-            if (event.currentTarget.value === 'CLIENT MODE') {
-                var cont = document.querySelector("#content");
-                ReactDOM.render(e(ClientForm), cont);
+            if (mode === 'CLIENT MODE') {
+                setMode("CLIENT").then(function () {
+                    var cont = document.querySelector("#content");
+                    ReactDOM.render(e(ClientForm), cont);
+                }).catch(function (err) {
+                    //TODO: display error in UI
+                    console.log(err);
+                });
             }
-            if (event.currentTarget.value === 'SERVER MODE') {
-                var _cont = document.querySelector("#content");
-                ReactDOM.render(e(ServerForm), _cont);
+            if (mode === 'SERVER MODE') {
+                setMode("SERVER").then(function () {
+                    var cont = document.querySelector("#content");
+                    ReactDOM.render(e(ServerForm), cont);
+                }).catch(function (err) {
+                    //TODO: display error in UI
+                    console.log(err);
+                });
             }
             var send = document.querySelector("#send");
             ReactDOM.render(e(MessageSend), send);
@@ -370,27 +372,18 @@ var MessageSend = function (_React$Component4) {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
                 body: "message=" + this.state.Message
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    console.log("ERROR");
+                    return;
+                }
+                // PARSE
+                response.json().then(function (data) {
+                    console.log(data);
+                });
+            }).catch(function (err) {
+                console.log("Fetch Error :-S", err);
             });
-            /* NO RESPONSE EXPECTED
-            .then(
-                function(response) {
-                    if (response.status !== 200) {
-                        console.log("ERROR");
-                        return;
-                    }
-                    // PARSE
-                    response.json().then(
-                        function(data) {
-                            console.log(data);
-                        }
-                    )
-                }
-            )
-            .catch(
-                function(err) {
-                    console.log("Fetch Error :-S", err);
-                }
-            )*/
             this.setState({ Message: '' });
             event.preventDefault();
         }
@@ -403,7 +396,8 @@ var MessageSend = function (_React$Component4) {
                 React.createElement(
                     "form",
                     { onSubmit: this.handleSubmit },
-                    React.createElement("textarea", { rows: "4", cols: "50", name: "message", value: this.state.Message, onChange: this.handleMessageChange }),
+                    React.createElement("textarea", { rows: "4", cols: "50", name: "message", value: this.state.Message,
+                        onChange: this.handleMessageChange }),
                     React.createElement(
                         "button",
                         { type: "submit" },
@@ -504,14 +498,12 @@ var Step = function (_React$Component6) {
 }(React.Component);
 
 function setMode(mode) {
-    fetch('./mode', {
+    return fetch('./mode', {
         method: 'post',
-        headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-        },
-        body: mode
+        body: JSON.stringify({ "mode": mode })
     });
 }
+
 /*
 function proceed() {
     const httpReq = new XMLHttpRequest();
