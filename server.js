@@ -1,6 +1,8 @@
 const net = require('net');
+
 const crypto = require('crypto');
 const aesWrapper = require('./component/aes-wrapper');
+const App = require('./app.js');
 
 //Single instance of server
 let server, socket;
@@ -13,100 +15,103 @@ let nonce_of_client;
 
 
 function start(host, port) {
-    if (server === undefined) {
-        server = net.createServer(listener => {
-            socket = listener;
-            console.log("Server is connected to client.");
+    return new Promise((resolve, reject) => {
+        if (server === undefined) {
+            server = net.createServer(listener => {
+                socket = listener;
 
-            // TODO: get shared secret from UI client
-            
-            // generate DH public key g and p
-            server_nonce = crypto.randomBytes(12);
-            server_dh = crypto.createDiffieHellman(512); //can use (2048), this number is in bits
-            server_dh_key = server_dh.generateKeys();
+                // Authentication on connection
+                
+                // generate DH public key g and p
+                server_nonce = crypto.randomBytes(12);
+                server_dh = crypto.createDiffieHellman(512); //can use (2048), this number is in bits
+                server_dh_key = server_dh.generateKeys();
 
-            // Send Auth1 - server send DH public key and nonce Rb
-            var buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
-            send(buffer);
-            console.log('Send Auth-1');
+                // Send Auth1 - server send DH public key and nonce Rb
+                var buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
+                send(buffer);
+                console.log('Send Auth-1');
                 //console.log("Send Auth - 1: ", buffer);
                 //console.log("prime: ",server_dh.getPrime());
                 //console.log("generator: ",server_dh.getGenerator());
+                console.log("Server is connected to client.");
 
+                listener.on('data', data => {
+                    let ws = App.getWebSocket();
+                    if (ws) {
+                        ws.send("Server received: " + data);
+                    }
+                    //decrypt data
 
-            listener.on('data', data => {
-                if(data.byteLength < 3){
-                    console.log('Data received not valid!');
-                    return;
-                }  
-                //console.log('Data received', data);
-                const code = data.toString().slice(0,3);
-                switch (code) {
-                    case '101':
-                        //Receive Auth2 
-                        //save nonce_client, compare nonce_server, calculate g^(ab) mode p
-                        nonce_of_client = data.slice(3,15);
-
-                        let aes_msg = data.slice(15,data.byteLength);
-                        let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret),aes_msg.toString()),'hex');
-                        let nonce_of_server_from_client = aes_raw.slice(0,12);
-                        if(nonce_of_server_from_client.equals(server_nonce)){
-                            console.log('Server authentication pass');
-                        }
-                        let dh_key_of_client = aes_raw.slice(12, aes_raw.byteLength);
-                        server_dh_secret = server_dh.computeSecret(dh_key_of_client);
-                        console.log('Receive Auth-2');
-
-                        //Send Auth3 - server send E(Ra nonce, g^a mod p)
-                        let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client,server_dh_key]));
-                        send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
-                        console.log('Send Auth-3');
-                        break;
-
-                    case '102':
-                        //decrypt data
-                        decrypt(data);
-                        send_encry("Got your message");
-                        break;
-                        
-                        
-                    default:
-                        console.log('Code not valid', code);
-                }
-                
+                    if(data.byteLength < 3){
+                        console.log('Data received not valid!');
+                        return;
+                    }  
+                    //console.log('Data received', data);
+                    const code = data.toString().slice(0,3);
+                    switch (code) {
+                        case '101':
+                            //Receive Auth2 
+                            //save nonce_client, compare nonce_server, calculate g^(ab) mode p
+                            nonce_of_client = data.slice(3,15);
+    
+                            let aes_msg = data.slice(15,data.byteLength);
+                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret),aes_msg.toString()),'hex');
+                            let nonce_of_server_from_client = aes_raw.slice(0,12);
+                            if(nonce_of_server_from_client.equals(server_nonce)){
+                                console.log('Server authentication pass');
+                            }
+                            let dh_key_of_client = aes_raw.slice(12, aes_raw.byteLength);
+                            server_dh_secret = server_dh.computeSecret(dh_key_of_client);
+                            console.log('Receive Auth-2');
+    
+                            //Send Auth3 - server send E(Ra nonce, g^a mod p)
+                            let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client,server_dh_key]));
+                            send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
+                            console.log('Send Auth-3');
+                            break;
+    
+                        case '102':
+                            //decrypt data
+                            decrypt(data);
+                            send_encry("Got your message");
+                            break;
+                            
+                            
+                        default:
+                            console.log('Code not valid', code);
+                    }
+                });
             });
 
-        });
+            server.on('close', function () {
+                server = undefined;
+                socket = undefined;
+                console.log("Server closed.")
+            });
 
-        server.on('error', (e) => {
-            if (e.code === 'EADDRINUSE') {
-                console.log('Address in use, retrying...');
-                setTimeout(() => {
-                    server.close();
-                    server.listen(port, host);
-                }, 1000);
-            } else {
-                console.log("Server Error");
-                console.log(e);
-            }
-        });
+            server.on('error', e => {
+                reject(e);
+            });
 
-
-        server.listen(port, host);
-        console.log("Server is listening at " + host + ":" + port);
-    } else {
-        console.error("Stop the server before starting a new connection.");
-    }
+            server.listen(port, host, resolve);
+        } else {
+            reject(new Error("Stop the server before starting a new connection."));
+        }
+    });
 }
 
 
 function send(data) {
-    if (socket) {
-        socket.write(data);
-        //console.log("sent data", data);
-    } else {
-        console.error("The server must be started first.");
-    }
+    return new Promise((resolve, reject) => {
+        if (socket) {
+            //TODO: encrypt data
+
+            socket.write(data, resolve);
+        } else {
+            reject(new Error("The server must be connected to a client first."));
+        }
+    });
 }
 
 //Encrypt Msg - using AES shared session key
@@ -134,14 +139,14 @@ function decrypt(encry_msg){
 }
 
 function stop() {
-    if (server) {
-        socket.close();
-        server.close();
-        server = undefined;
-        socket = undefined;
-    } else {
-        console.error("The server is not running. ");
-    }
+    return new Promise(resolve => {
+        if (server) {
+            console.log("Closing server...");
+            server.close(resolve);
+        } else {
+            resolve();
+        }
+    });
 }
 
 function get32B(sdata){
