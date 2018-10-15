@@ -16,17 +16,18 @@ aesWrapper.generateIv = () => {
 };
 
 // separate initialization vector from message
-aesWrapper.separateVectorFromData = (data) =>  {
+aesWrapper.separateVectorFromData = (data) => {
     //console.log(data);
     //console.log('data');
+    //TODO: Debug - INVALID IV LENGTH ERROR when decrypting message (Should be 16 bytes instead?)
     var iv = data.slice(-24);
-    var message = data.substring(0, data.length - 24)
+    var message = data.substring(0, data.length - 24);
 
-    return{
+    return {
         iv: iv,
         message: message
     };
-}
+};
 
 aesWrapper.encrypt = (key, iv, text) => {
     let encrypted = '';
@@ -40,7 +41,7 @@ aesWrapper.encrypt = (key, iv, text) => {
 aesWrapper.decrypt = (key, text) => {
     let dec = '';
     let data = aesWrapper.separateVectorFromData(text);
-    let cipher = crypto.createDecipheriv('aes-256-cbc', key,  Buffer.from(data.iv, 'base64'));
+    let cipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(data.iv, 'base64'));
     dec += cipher.update(Buffer.from(data.message, 'base64'), 'base64', 'hex');
     dec += cipher.final('hex');
 

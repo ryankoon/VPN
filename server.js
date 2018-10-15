@@ -6,8 +6,8 @@ const App = require('./app.js');
 
 //Single instance of server
 let server, socket;
-let shared_secret = 'scambooter';
-let server_nonce ;
+let shared_secret = 'scambooter'; //TODO: remove hardcoded secret
+let server_nonce;
 let server_dh;
 let server_dh_key;
 let server_dh_secret;
@@ -21,7 +21,7 @@ function start(host, port) {
                 socket = listener;
 
                 // Authentication on connection
-                
+
                 // generate DH public key g and p
                 server_nonce = crypto.randomBytes(12);
                 server_dh = crypto.createDiffieHellman(512); //can use (2048), this number is in bits
@@ -37,47 +37,44 @@ function start(host, port) {
                 console.log("Server is connected to client.");
 
                 listener.on('data', data => {
-                    let ws = App.getWebSocket();
-                    if (ws) {
-                        ws.send("Server received: " + data);
-                    }
+                    App.webSocketSend("Server received: " + data);
                     //decrypt data
 
-                    if(data.byteLength < 3){
+                    if (data.byteLength < 3) {
                         console.log('Data received not valid!');
                         return;
-                    }  
+                    }
                     //console.log('Data received', data);
-                    const code = data.toString().slice(0,3);
+                    const code = data.toString().slice(0, 3);
                     switch (code) {
                         case '101':
-                            //Receive Auth2 
+                            //Receive Auth2
                             //save nonce_client, compare nonce_server, calculate g^(ab) mode p
-                            nonce_of_client = data.slice(3,15);
-    
-                            let aes_msg = data.slice(15,data.byteLength);
-                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret),aes_msg.toString()),'hex');
-                            let nonce_of_server_from_client = aes_raw.slice(0,12);
-                            if(nonce_of_server_from_client.equals(server_nonce)){
+                            nonce_of_client = data.slice(3, 15);
+
+                            let aes_msg = data.slice(15, data.byteLength);
+                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret), aes_msg.toString()), 'hex');
+                            let nonce_of_server_from_client = aes_raw.slice(0, 12);
+                            if (nonce_of_server_from_client.equals(server_nonce)) {
                                 console.log('Server authentication pass');
                             }
                             let dh_key_of_client = aes_raw.slice(12, aes_raw.byteLength);
                             server_dh_secret = server_dh.computeSecret(dh_key_of_client);
                             console.log('Receive Auth-2');
-    
+
                             //Send Auth3 - server send E(Ra nonce, g^a mod p)
-                            let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client,server_dh_key]));
+                            let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client, server_dh_key]));
                             send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
                             console.log('Send Auth-3');
                             break;
-    
+
                         case '102':
                             //decrypt data
                             decrypt(data);
                             send_encry("Got your message");
                             break;
-                            
-                            
+
+
                         default:
                             console.log('Code not valid', code);
                     }
@@ -87,7 +84,7 @@ function start(host, port) {
             server.on('close', function () {
                 server = undefined;
                 socket = undefined;
-                console.log("Server closed.")
+                App.webSocketSend("Server closed.")
             });
 
             server.on('error', e => {
@@ -96,7 +93,9 @@ function start(host, port) {
 
             server.listen(port, host, resolve);
         } else {
-            reject(new Error("Stop the server before starting a new connection."));
+            let msg = "Stop the server before starting a new connection.";
+            reject(new Error(msg));
+            App.webSocketSend(msg);
         }
     });
 }
@@ -109,39 +108,44 @@ function send(data) {
 
             socket.write(data, resolve);
         } else {
-            reject(new Error("The server must be connected to a client first."));
+            let msg = "The server must be connected to a client first.";
+            reject(new Error(msg));
+            App.webSocketSend(msg);
         }
     });
 }
 
 //Encrypt Msg - using AES shared session key
-function send_encry(msg){
-    if(server_dh_secret){
-        let encry_msg = aesWrapper.createAesMessage(server_dh_secret.slice(0,32),Buffer.from(msg));
-        send(Buffer.from('303'+ encry_msg));
+function send_encry(msg) {
+    if (server_dh_secret) {
+        let encry_msg = aesWrapper.createAesMessage(server_dh_secret.slice(0, 32), Buffer.from(msg));
+        send(Buffer.from('303' + encry_msg));
         console.log('Send message: ', msg);
-    }else{
+    } else {
         console.error("Mutual Authentication failed.");
     }
 }
 
 //Decrypt Msg - using AES shared session key
-function decrypt(encry_msg){
-    if(server_dh_secret){
+function decrypt(encry_msg) {
+    if (server_dh_secret) {
         let encryted_aes_msg = encry_msg.slice(3, encry_msg.byteLength);
-        let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0,32),encryted_aes_msg.toString()),'hex');
-        console.log("Receive message:",decrypted_aes_msg.toString());
-        //TODO: display this raw and decrypted message in UI client 
-    }
-    else{
+        let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0, 32), encryted_aes_msg.toString()), 'hex');
+        console.log("Receive message:", decrypted_aes_msg.toString());
+        //TODO: display this raw and decrypted message in UI client
+    } else {
         console.log("Mutual Authentication failed.");
     }
 }
 
 function stop() {
     return new Promise(resolve => {
+        if (socket) {
+            App.webSocketSend("Sending FIN to client...");
+            socket.end();
+        }
         if (server) {
-            console.log("Closing server...");
+            App.webSocketSend("Closing server...");
             server.close(resolve);
         } else {
             resolve();
@@ -149,15 +153,11 @@ function stop() {
     });
 }
 
-function get32B(sdata){
+function get32B(sdata) {
     let buffer = Buffer.from(sdata);
-    if(buffer.byteLength > 32)
-        return buffer.slice(0, 32);
-    else
-        return Buffer.from(sdata.padEnd(32, '0'));
+    if (buffer.byteLength > 32) return buffer.slice(0, 32);
+    return Buffer.from(sdata.padEnd(32, '0'));
 }
-
-start("127.0.0.1", "8081");
 
 //Exports
 module.exports.start = start;
