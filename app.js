@@ -2,6 +2,7 @@ const restify = require('restify');
 const VPNServer = require('./server.js');
 const VPNClient = require('./client.js');
 const WSServer = require("ws").Server;
+const {app} = require('electron');
 
 const UIServer = restify.createServer();
 const WebSocketServer = new WSServer({server: UIServer.server});
@@ -11,11 +12,14 @@ WebSocketServer.on('connection', socket => {
 });
 
 const MODES = {SERVER: "SERVER", CLIENT: "CLIENT"};
+const APPROOT = app.getAppPath();
 
 let currentMode;
 
-function getWebSocket() {
-    return WebSocket;
+function webSocketSend(message) {
+    if (WebSocket) {
+        WebSocket.send(message);
+    }
 }
 
 function proceed(req, res, next) {
@@ -165,7 +169,7 @@ function serveUI() {
     UIServer.post('/serve', listenForClient);
     UIServer.post('/sendMessage', sendMessage);
     UIServer.get('/*', restify.plugins.serveStatic({
-        directory: './public',
+        directory: APPROOT + '/public',
         default: 'index.html'
     }));
 
@@ -177,4 +181,4 @@ function serveUI() {
 serveUI();
 
 //Exports
-module.exports.getWebSocket = getWebSocket;
+module.exports.webSocketSend = webSocketSend;
