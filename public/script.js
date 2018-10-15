@@ -34,7 +34,6 @@ var ServerForm = function (_React$Component) {
             Running: false,
             Port: "",
             Secret: ""
-
         };
 
         _this.stopServer = _this.stopServer.bind(_this);

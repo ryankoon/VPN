@@ -55,4 +55,4 @@ aesWrapper.createAesMessage = (aesKey, message) => {
     return encryptedMessage;
 };
 
-module.exports.aesWrapper = aesWrapper;
+module.exports = aesWrapper;
