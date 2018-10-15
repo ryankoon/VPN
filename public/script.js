@@ -46,7 +46,7 @@ var ServerForm = function (_React$Component) {
 
     _createClass(ServerForm, [{
         key: "stopServer",
-        value: function stopServer(event) {
+        value: function stopServer() {
             setMode('SERVER');
             this.setState({ Running: false });
             modeSelector.handleModeChange(null);
@@ -304,8 +304,6 @@ var ModeSelect = function (_React$Component3) {
                         ReactDOM.render(e(ClientForm), cont);
                         var send = document.querySelector("#send");
                         ReactDOM.render(e(MessageSend), send);
-                        var cons = document.querySelector("#console");
-                        ReactDOM.render(e(MessageReceive), cons);
                     }).catch(function (err) {
                         logConsole.addLog("Error changing to client mode\n");
                         console.log(err);
@@ -316,8 +314,6 @@ var ModeSelect = function (_React$Component3) {
                         ReactDOM.render(e(ServerForm), cont);
                         var send = document.querySelector("#send");
                         ReactDOM.render(e(MessageSend), send);
-                        var cons = document.querySelector("#console");
-                        ReactDOM.render(e(MessageReceive), cons);
                     }).catch(function (err) {
                         logConsole.addLog("Error changing to server mode\n");
                         console.log(err);
@@ -456,66 +452,29 @@ var MessageSend = function (_React$Component4) {
     return MessageSend;
 }(React.Component);
 
-var MessageReceive = function (_React$Component5) {
-    _inherits(MessageReceive, _React$Component5);
+var LoggingConsole = function (_React$Component5) {
+    _inherits(LoggingConsole, _React$Component5);
 
-    function MessageReceive(props) {
-        _classCallCheck(this, MessageReceive);
+    function LoggingConsole(props) {
+        _classCallCheck(this, LoggingConsole);
 
-        var _this5 = _possibleConstructorReturn(this, (MessageReceive.__proto__ || Object.getPrototypeOf(MessageReceive)).call(this, props));
+        var _this5 = _possibleConstructorReturn(this, (LoggingConsole.__proto__ || Object.getPrototypeOf(LoggingConsole)).call(this, props));
 
         _this5.state = {
-            MessageReceived: 'None'
+            Log: ''
         };
+
+        _this5.clearLog = _this5.clearLog.bind(_this5);
+        _this5.addLog = _this5.addLog.bind(_this5);
 
         console.log("setting up web socket.");
         var socket = new WebSocket('ws://localhost:8080');
 
         socket.addEventListener('message', function (event) {
             console.log('Websocket message: ', event.data);
-            _this5.setState({ MessageReceived: event.data });
+            _this5.addLog(event.data);
         });
         return _this5;
-    }
-
-    _createClass(MessageReceive, [{
-        key: "render",
-        value: function render() {
-            return React.createElement(
-                "div",
-                null,
-                React.createElement(
-                    "h3",
-                    null,
-                    "Reveived Messages:"
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    this.state.MessageReceived
-                )
-            );
-        }
-    }]);
-
-    return MessageReceive;
-}(React.Component);
-
-var LoggingConsole = function (_React$Component6) {
-    _inherits(LoggingConsole, _React$Component6);
-
-    function LoggingConsole(props) {
-        _classCallCheck(this, LoggingConsole);
-
-        var _this6 = _possibleConstructorReturn(this, (LoggingConsole.__proto__ || Object.getPrototypeOf(LoggingConsole)).call(this, props));
-
-        _this6.state = {
-            Log: ''
-        };
-
-        _this6.clearLog = _this6.clearLog.bind(_this6);
-        _this6.addLog = _this6.addLog.bind(_this6);
-        return _this6;
     }
 
     _createClass(LoggingConsole, [{
@@ -557,8 +516,8 @@ var LoggingConsole = function (_React$Component6) {
     return LoggingConsole;
 }(React.Component);
 
-var Step = function (_React$Component7) {
-    _inherits(Step, _React$Component7);
+var Step = function (_React$Component6) {
+    _inherits(Step, _React$Component6);
 
     function Step() {
         _classCallCheck(this, Step);

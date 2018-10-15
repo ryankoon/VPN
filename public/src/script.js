@@ -32,7 +32,7 @@ class ServerForm extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    stopServer(event) {
+    stopServer() {
         setMode('SERVER');
         this.setState({Running: false});
         modeSelector.handleModeChange(null);
@@ -59,7 +59,7 @@ class ServerForm extends React.Component {
             .then(
                 function (response) {
                     if (response.status !== 200) {
-                        console.log("ERROR: "+ response.status);
+                        console.log("ERROR: " + response.status);
                         logConsole.addLog("ERROR: " + response.status);
                         return;
                     }
@@ -97,12 +97,12 @@ class ServerForm extends React.Component {
                     </div>
                     <div>
                         {
-                            this.state.Running ? null :(<button type="submit">Start server</button>)
+                            this.state.Running ? null : <button type="submit">Start server</button>
                         }
                     </div>
                 </form>
                 {
-                    this.state.Running ? (<button onClick={this.stopServer}>Stop server</button>) : null
+                    this.state.Running ? <button onClick={this.stopServer}>Stop server</button> : null
                 } 
             </div>
         )
@@ -227,8 +227,6 @@ class ModeSelect extends React.Component {
                         ReactDOM.render(e(ClientForm), cont);
                         const send = document.querySelector("#send");
                         ReactDOM.render(e(MessageSend), send);
-                        const cons = document.querySelector("#console");
-                        ReactDOM.render(e(MessageReceive), cons);
                     })
                     .catch(err => {
                         logConsole.addLog("Error changing to client mode\n");
@@ -241,8 +239,6 @@ class ModeSelect extends React.Component {
                         ReactDOM.render(e(ServerForm), cont);
                         const send = document.querySelector("#send");
                         ReactDOM.render(e(MessageSend), send);
-                        const cons = document.querySelector("#console");
-                        ReactDOM.render(e(MessageReceive), cons); 
                     })
                     .catch(err => {
                         logConsole.addLog("Error changing to server mode\n");
@@ -357,33 +353,6 @@ class MessageSend extends React.Component {
     }
 }
 
-class MessageReceive extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            MessageReceived: 'None'
-        };
-
-        console.log("setting up web socket.");
-        let socket = new WebSocket('ws://localhost:8080');
-
-        socket.addEventListener('message', event => {
-            console.log('Websocket message: ', event.data);
-            this.setState({MessageReceived: event.data});
-        });
-    }
-
-    render() {
-        return (
-            <div>
-                <h3>Reveived Messages:</h3>
-                <div>{this.state.MessageReceived}</div>
-            </div>
-        )
-    }
-}
-
 class LoggingConsole extends React.Component {
     constructor(props) {
         super(props);
@@ -394,6 +363,14 @@ class LoggingConsole extends React.Component {
 
         this.clearLog = this.clearLog.bind(this);
         this.addLog = this.addLog.bind(this);
+
+        console.log("setting up web socket.");
+        let socket = new WebSocket('ws://localhost:8080');
+
+        socket.addEventListener('message', event => {
+            console.log('Websocket message: ', event.data);
+            this.addLog(event.data);
+        });
     }
 
     clearLog() {
