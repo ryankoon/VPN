@@ -1,12 +1,17 @@
 /* eslint-disable no-undef */
 window.addEventListener("load", setup);
 const e = React.createElement;
+var logConsole;
+var modeSelector;
+var step;
 
 function setup() {
     const select = document.querySelector("#select");
-    ReactDOM.render(e(ModeSelect), select);
+    modeSelector = ReactDOM.render(e(ModeSelect), select);
     const stepContainer = document.querySelector("#container-step");
-    ReactDOM.render(e(Step), stepContainer);
+    step = ReactDOM.render(e(Step), stepContainer);
+    const logs = document.querySelector("#logs");
+    logConsole = ReactDOM.render(e(LoggingConsole), logs);
 }
 
 
@@ -15,13 +20,22 @@ class ServerForm extends React.Component {
         super(props);
 
         this.state = {
+            Running: false,
             Port: "",
             Secret: ""
+            
         };
 
+        this.stopServer = this.stopServer.bind(this);
         this.handlePortChange = this.handlePortChange.bind(this);
         this.handleSecretChange = this.handleSecretChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    stopServer(event) {
+        setMode('SERVER');
+        this.setState({Running: false});
+        modeSelector.handleModeChange(null);
     }
 
     handlePortChange(event) {
@@ -34,6 +48,7 @@ class ServerForm extends React.Component {
 
     handleSubmit(event) {
         console.log('port=' + this.state.Port);
+        let comp = this;
         fetch('./serve', {
             method: 'post',
             headers: {
@@ -44,10 +59,12 @@ class ServerForm extends React.Component {
             .then(
                 function (response) {
                     if (response.status !== 200) {
-                        console.log("ERROR");
+                        console.log("ERROR: "+ response.status);
+                        logConsole.addLog("ERROR: " + response.status);
                         return;
                     }
                     // PARSE
+                    comp.setState({Running: true});
                     response.json().then(
                         function (data) {
                             console.log(data);
@@ -79,11 +96,14 @@ class ServerForm extends React.Component {
                                onChange={this.handleSecretChange}/>
                     </div>
                     <div>
-                        {/*TODO: Disable this button until stop server button is clicked*/}
-                        {/*TODO: Stop server button/mechanism*/}
-                        <button type="submit">Start server</button>
+                        {
+                            this.state.Running ? null :(<button type="submit">Start server</button>)
+                        }
                     </div>
                 </form>
+                {
+                    this.state.Running ? (<button onClick={this.stopServer}>Stop server</button>) : null
+                } 
             </div>
         )
     }
@@ -129,13 +149,14 @@ class ClientForm extends React.Component {
             .then(
                 function (response) {
                     if (response.status !== 200) {
-                        console.log("ERROR");
+                        console.log("ERROR: "+ response.status);
+                        logConsole.addLog("ERROR: " + response.status);
                         // PARSE
                         response.json()
                             .then(
                                 function (data) {
                                     if (data.code === "ECONNREFUSED") {
-                                        //TODO: Indicate in UI that server is not available
+                                        logConsole.addLog("server is not available\n");
                                         alert("The server is unavailable. Ensure that the server is running.")
                                     } else {
                                         console.log(data);
@@ -196,34 +217,50 @@ class ModeSelect extends React.Component {
     }
 
     handleModeChange(event) {
-        let mode = event.currentTarget.value;
-        this.setState({mode: event.currentTarget.value});
-        if (mode === 'CLIENT MODE') {
-            setMode("CLIENT")
-                .then(() => {
-                    const cont = document.querySelector("#content");
-                    ReactDOM.render(e(ClientForm), cont);
-                })
-                .catch(err => {
-                    //TODO: display error in UI
-                    console.log(err);
-                })
-        }
-        if (mode === 'SERVER MODE') {
-            setMode("SERVER")
-                .then(() => {
-                    const cont = document.querySelector("#content");
-                    ReactDOM.render(e(ServerForm), cont);
-                })
-                .catch(err => {
-                    //TODO: display error in UI
-                    console.log(err);
-                })
-        }
-        const send = document.querySelector("#send");
-        ReactDOM.render(e(MessageSend), send);
-        const cons = document.querySelector("#console");
-        ReactDOM.render(e(MessageReceive), cons);
+        if (event) {
+            let mode = event.currentTarget.value;
+            this.setState({mode: event.currentTarget.value});
+            if (mode === 'CLIENT MODE') {
+                setMode("CLIENT")
+                    .then(() => {
+                        const cont = document.querySelector("#content");
+                        ReactDOM.render(e(ClientForm), cont);
+                        const send = document.querySelector("#send");
+                        ReactDOM.render(e(MessageSend), send);
+                        const cons = document.querySelector("#console");
+                        ReactDOM.render(e(MessageReceive), cons);
+                    })
+                    .catch(err => {
+                        logConsole.addLog("Error changing to client mode\n");
+                        console.log(err);
+                    })
+            } else if (mode === 'SERVER MODE') {
+                setMode("SERVER")
+                    .then(() => {
+                        const cont = document.querySelector("#content");
+                        ReactDOM.render(e(ServerForm), cont);
+                        const send = document.querySelector("#send");
+                        ReactDOM.render(e(MessageSend), send);
+                        const cons = document.querySelector("#console");
+                        ReactDOM.render(e(MessageReceive), cons); 
+                    })
+                    .catch(err => {
+                        logConsole.addLog("Error changing to server mode\n");
+                        console.log(err);
+                    })
+            } else {
+                console.log("ERROR");
+                alert("ERROR");
+            } 
+        } else {
+            this.setState({mode: ''});
+            const cont = document.querySelector("#content");
+            ReactDOM.render(null, cont);
+            const send = document.querySelector("#send");
+            ReactDOM.render(null, send);
+            const cons = document.querySelector("#console");
+            ReactDOM.render(null, cons);
+        } 
     }
 
     render() {
@@ -281,7 +318,8 @@ class MessageSend extends React.Component {
                 .then(
                     function (response) {
                         if (response.status !== 200) {
-                            console.log("ERROR");
+                            console.log("ERROR: " + response.status);
+                            logConsole.addLog("ERROR: " + response.status);
                             // PARSE
                             response.json()
                                 .then(
@@ -338,9 +376,45 @@ class MessageReceive extends React.Component {
 
     render() {
         return (
-            <div>{this.state.MessageReceived}</div>
+            <div>
+                <h3>Reveived Messages:</h3>
+                <div>{this.state.MessageReceived}</div>
+            </div>
         )
     }
+}
+
+class LoggingConsole extends React.Component {
+    constructor(props) {
+        super(props);
+        
+        this.state = {
+            Log: ''
+        };
+
+        this.clearLog = this.clearLog.bind(this);
+        this.addLog = this.addLog.bind(this);
+    }
+
+    clearLog() {
+        this.setState({Log: ''});
+    }
+
+    addLog(data) {
+        let log = this.state.Log + data;
+        this.setState({Log: log});
+    }
+
+    render() {
+        return (
+            <div>
+                <button onClick={this.clearLog}>Clear Log</button>
+                <h3>Log:</h3>
+                <div>{this.state.Log}</div>
+            </div>
+        )
+    }
+
 }
 
 class Step extends React.Component {
@@ -359,6 +433,7 @@ function setMode(mode) {
         body: JSON.stringify({"mode": mode})
     });
 }
+
 
 /*
 function proceed() {
