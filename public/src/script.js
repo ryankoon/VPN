@@ -23,7 +23,6 @@ class ServerForm extends React.Component {
             Running: false,
             Port: "",
             Secret: ""
-            
         };
 
         this.stopServer = this.stopServer.bind(this);
@@ -103,7 +102,7 @@ class ServerForm extends React.Component {
                 </form>
                 {
                     this.state.Running ? <button onClick={this.stopServer}>Stop server</button> : null
-                } 
+                }
             </div>
         )
     }
@@ -149,7 +148,7 @@ class ClientForm extends React.Component {
             .then(
                 function (response) {
                     if (response.status !== 200) {
-                        console.log("ERROR: "+ response.status);
+                        console.log("ERROR: " + response.status);
                         logConsole.addLog("ERROR: " + response.status);
                         // PARSE
                         response.json()
@@ -247,7 +246,7 @@ class ModeSelect extends React.Component {
             } else {
                 console.log("ERROR");
                 alert("ERROR");
-            } 
+            }
         } else {
             this.setState({mode: ''});
             const cont = document.querySelector("#content");
@@ -256,7 +255,7 @@ class ModeSelect extends React.Component {
             ReactDOM.render(null, send);
             const cons = document.querySelector("#console");
             ReactDOM.render(null, cons);
-        } 
+        }
     }
 
     render() {
@@ -356,7 +355,7 @@ class MessageSend extends React.Component {
 class LoggingConsole extends React.Component {
     constructor(props) {
         super(props);
-        
+
         this.state = {
             Log: ''
         };

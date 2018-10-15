@@ -6,7 +6,8 @@ const App = require('./app.js');
 
 //Single instance of server
 let server, socket;
-let shared_secret = 'scambooter'; //TODO: remove hardcoded secret
+//TODO: remove hardcoded secret
+let shared_secret = 'scambooter';
 let server_nonce;
 let server_dh;
 let server_dh_key;
@@ -24,11 +25,14 @@ function start(host, port) {
 
                 // generate DH public key g and p
                 server_nonce = crypto.randomBytes(12);
-                server_dh = crypto.createDiffieHellman(512); //can use (2048), this number is in bits
+
+                //can use (2048), this number is in bits
+                server_dh = crypto.createDiffieHellman(512);
+
                 server_dh_key = server_dh.generateKeys();
 
                 // Send Auth1 - server send DH public key and nonce Rb
-                var buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
+                const buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
                 send(buffer);
                 console.log('Send Auth-1');
                 //console.log("Send Auth - 1: ", buffer);
@@ -47,7 +51,7 @@ function start(host, port) {
                     //console.log('Data received', data);
                     const code = data.toString().slice(0, 3);
                     switch (code) {
-                        case '101':
+                        case '101': {
                             //Receive Auth2
                             //save nonce_client, compare nonce_server, calculate g^(ab) mode p
                             nonce_of_client = data.slice(3, 15);
@@ -58,7 +62,7 @@ function start(host, port) {
                             if (nonce_of_server_from_client.equals(server_nonce)) {
                                 console.log('Server authentication pass');
                             }
-                            let dh_key_of_client = aes_raw.slice(12, aes_raw.byteLength);
+                            let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
                             server_dh_secret = server_dh.computeSecret(dh_key_of_client);
                             console.log('Receive Auth-2');
 
@@ -67,16 +71,16 @@ function start(host, port) {
                             send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
                             console.log('Send Auth-3');
                             break;
-
-                        case '102':
+                        }
+                        case '102': {
                             //decrypt data
                             decrypt(data);
                             send_encry("Got your message");
                             break;
-
-
-                        default:
+                        }
+                        default: {
                             console.log('Code not valid', code);
+                        }
                     }
                 });
             });
@@ -105,7 +109,6 @@ function send(data) {
     return new Promise((resolve, reject) => {
         if (socket) {
             //TODO: encrypt data
-
             socket.write(data, resolve);
         } else {
             let msg = "The server must be connected to a client first.";
@@ -118,23 +121,32 @@ function send(data) {
 //Encrypt Msg - using AES shared session key
 function send_encry(msg) {
     if (server_dh_secret) {
+        App.webSocketSend("Encrypting plaintext: " + msg);
+
         let encry_msg = aesWrapper.createAesMessage(server_dh_secret.slice(0, 32), Buffer.from(msg));
+
+        App.webSocketSend("Sending ciphertext: " + msg);
         send(Buffer.from('303' + encry_msg));
-        console.log('Send message: ', msg);
     } else {
-        console.error("Mutual Authentication failed.");
+        let msg = "Message encryption failed. Mutual Authentication failed.";
+        console.error(msg);
+        App.webSocketSend(msg);
     }
 }
 
 //Decrypt Msg - using AES shared session key
 function decrypt(encry_msg) {
     if (server_dh_secret) {
+        App.webSocketSend("Received ciphertext:", encry_msg);
+
         let encryted_aes_msg = encry_msg.slice(3, encry_msg.byteLength);
         let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0, 32), encryted_aes_msg.toString()), 'hex');
-        console.log("Receive message:", decrypted_aes_msg.toString());
-        //TODO: display this raw and decrypted message in UI client
+
+        App.webSocketSend("Decrypted message:", decrypted_aes_msg.toString());
     } else {
-        console.log("Mutual Authentication failed.");
+        let msg = "Message decryption failed. Mutual Authentication failed.";
+        console.error(msg);
+        App.webSocketSend(msg);
     }
 }
 

@@ -7,21 +7,17 @@ aesWrapper.getAlgorithmList = () => {
     console.log(crypto.getCiphers());
 };
 
-aesWrapper.generateKey = () => {
-    return crypto.randomBytes(32);
-};
+aesWrapper.generateKey = () => crypto.randomBytes(32);
 
-aesWrapper.generateIv = () => {
-    return crypto.randomBytes(16);
-};
+aesWrapper.generateIv = () => crypto.randomBytes(16);
 
 // separate initialization vector from message
-aesWrapper.separateVectorFromData = (data) => {
+aesWrapper.separateVectorFromData = data => {
     //console.log(data);
     //console.log('data');
     //TODO: Debug - INVALID IV LENGTH ERROR when decrypting message (Should be 16 bytes instead?)
-    var iv = data.slice(-24);
-    var message = data.substring(0, data.length - 24);
+    let iv = data.slice(-24);
+    let message = data.substring(0, data.length - 24);
 
     return {
         iv: iv,
@@ -49,12 +45,7 @@ aesWrapper.decrypt = (key, text) => {
 };
 
 // add initialization vector to message
-aesWrapper.addIvToBody = (iv, encryptedBase64) => {
-    encryptedBase64 += iv.toString('base64');
-    //console.log(iv.toString('base64'));
-
-    return encryptedBase64;
-};
+aesWrapper.addIvToBody = (iv, encryptedBase64) => encryptedBase64 + iv.toString('base64');
 
 aesWrapper.createAesMessage = (aesKey, message) => {
     let aesIv = aesWrapper.generateIv();
@@ -64,4 +55,4 @@ aesWrapper.createAesMessage = (aesKey, message) => {
     return encryptedMessage;
 };
 
-module.exports = aesWrapper;
+module.exports.aesWrapper = aesWrapper;

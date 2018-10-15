@@ -49,7 +49,7 @@ module.exports = {
             }
         ],
         "callback-return": "error",
-        "camelcase": "error",
+        "camelcase": "off",
         "capitalized-comments": "off",
         "class-methods-use-this": "off",
         "comma-dangle": "error",
@@ -108,7 +108,7 @@ module.exports = {
             "beside"
         ],
         "indent": "off",
-        "indent-legacy": "error",
+        "indent-legacy": "off",
         "init-declarations": "off",
         "jsx-quotes": [
             "error",
