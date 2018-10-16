@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 window.addEventListener("load", setup);
 const e = React.createElement;
 var logConsole;
@@ -363,8 +362,8 @@ class LoggingConsole extends React.Component {
         this.clearLog = this.clearLog.bind(this);
         this.addLog = this.addLog.bind(this);
 
-        console.log("setting up web socket.");
-        let socket = new WebSocket('ws://localhost:8080');
+        let wsAddr = "ws://localhost:" + UIPORT;
+        let socket = new WebSocket(wsAddr);
 
         socket.addEventListener('message', event => {
             console.log('Websocket message: ', event.data);

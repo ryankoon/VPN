@@ -3,6 +3,7 @@ const VPNServer = require('./server.js');
 const VPNClient = require('./client.js');
 const WSServer = require("ws").Server;
 const {app} = require('electron');
+const {UIPORT} = require("./public/src/properties");
 
 const UIServer = restify.createServer();
 const WebSocketServer = new WSServer({server: UIServer.server});
@@ -162,6 +163,7 @@ function stopConnections() {
  * Starts serving the UI to set up a connection.
  */
 function serveUI() {
+    console.log("SERVEUI");
     UIServer.use(restify.plugins.queryParser());
     UIServer.use(restify.plugins.bodyParser());
 
@@ -176,8 +178,8 @@ function serveUI() {
         default: 'index.html'
     }));
 
-    UIServer.listen(8080, "127.0.0.1", function () {
-        console.log("UI is accessible at http://127.0.0.1:8080");
+    UIServer.listen(UIPORT, "127.0.0.1", function () {
+        console.log("UI is accessible at http://127.0.0.1:" + UIPORT);
     });
 }
 

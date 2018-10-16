@@ -89,6 +89,7 @@ function start(host, port, sharedSecret) {
             });
 
             client.on('error', e => {
+                console.log("Client on error: " + e);
                 reject(e);
             });
 

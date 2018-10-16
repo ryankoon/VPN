@@ -1,3 +1,4 @@
+const {UIPORT} = require("./public/src/properties");
 require("./app.js");
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron');
@@ -9,9 +10,8 @@ let mainWindow;
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({width: 1080, height: 800});
-
     // and load the index.html of the app.
-    mainWindow.loadURL('http://localhost:8080/');
+    mainWindow.loadURL('http://127.0.0.1:' + UIPORT);
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
