@@ -117,9 +117,9 @@ function sendMessage(req, res, next) {
         let message = req.body.message;
 
         if (currentMode === MODES.SERVER) {
-            sendMessageHandler(res, VPNServer.send(message));
+            sendMessageHandler(res, VPNServer.send_encry(message));
         } else if (currentMode === MODES.CLIENT) {
-            sendMessageHandler(res, VPNClient.send(message));
+            sendMessageHandler(res, VPNClient.send_encry(message));
         } else {
             console.error("Invalid mode: " + currentMode);
             res.send(500, "Invalid mode. Please restart the application.");

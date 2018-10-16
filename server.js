@@ -173,5 +173,5 @@ function get32B(sdata) {
 
 //Exports
 module.exports.start = start;
-module.exports.send = send;
+module.exports.send_encry = send_encry;
 module.exports.stop = stop;
