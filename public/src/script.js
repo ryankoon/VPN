@@ -53,7 +53,7 @@ class ServerForm extends React.Component {
             headers: {
                 "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
             },
-            body: 'port=' + this.state.Port
+            body: 'port=' + this.state.Port + '&secret=' + this.state.Secret
         })
             .then(
                 function (response) {
@@ -143,7 +143,7 @@ class ClientForm extends React.Component {
             headers: {
                 "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
             },
-            body: "host=" + this.state.IP + "&port=" + this.state.Port
+            body: "host=" + this.state.IP + "&port=" + this.state.Port + "&secret=" + this.state.Secret
         })
             .then(
                 function (response) {

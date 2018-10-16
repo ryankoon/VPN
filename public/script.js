@@ -70,7 +70,7 @@ var ServerForm = function (_React$Component) {
                 headers: {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
-                body: 'port=' + this.state.Port
+                body: 'port=' + this.state.Port + '&secret=' + this.state.Secret
             }).then(function (response) {
                 if (response.status !== 200) {
                     console.log("ERROR: " + response.status);
@@ -190,7 +190,7 @@ var ClientForm = function (_React$Component2) {
                 headers: {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
-                body: "host=" + this.state.IP + "&port=" + this.state.Port
+                body: "host=" + this.state.IP + "&port=" + this.state.Port + "&secret=" + this.state.Secret
             }).then(function (response) {
                 if (response.status !== 200) {
                     console.log("ERROR: " + response.status);
