@@ -338,18 +338,8 @@ var ModeSelect = function (_React$Component3) {
                 "div",
                 null,
                 React.createElement(
-                    "h3",
-                    null,
-                    this.state.mode
-                ),
-                React.createElement(
                     "div",
                     { onChange: this.handleIPChange },
-                    React.createElement(
-                        "label",
-                        { htmlFor: "client" },
-                        "Client"
-                    ),
                     React.createElement("input", {
                         id: "client",
                         type: "radio",
@@ -359,8 +349,8 @@ var ModeSelect = function (_React$Component3) {
                     }),
                     React.createElement(
                         "label",
-                        { htmlFor: "server" },
-                        "Server"
+                        { htmlFor: "client" },
+                        "Client"
                     ),
                     React.createElement("input", {
                         id: "server",
@@ -368,7 +358,17 @@ var ModeSelect = function (_React$Component3) {
                         value: "SERVER MODE",
                         checked: this.state.mode === 'SERVER MODE',
                         onChange: this.handleModeChange
-                    })
+                    }),
+                    React.createElement(
+                        "label",
+                        { htmlFor: "server" },
+                        "Server"
+                    )
+                ),
+                React.createElement(
+                    "h3",
+                    null,
+                    this.state.mode
                 )
             );
         }

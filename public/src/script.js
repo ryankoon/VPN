@@ -261,9 +261,7 @@ class ModeSelect extends React.Component {
     render() {
         return (
             <div>
-                <h3>{this.state.mode}</h3>
                 <div onChange={this.handleIPChange}>
-                    <label htmlFor="client">Client</label>
                     <input
                         id="client"
                         type="radio"
@@ -271,7 +269,7 @@ class ModeSelect extends React.Component {
                         checked={this.state.mode === 'CLIENT MODE'}
                         onChange={this.handleModeChange}
                     />
-                    <label htmlFor="server">Server</label>
+                    <label htmlFor="client">Client</label>
                     <input
                         id="server"
                         type="radio"
@@ -279,7 +277,9 @@ class ModeSelect extends React.Component {
                         checked={this.state.mode === 'SERVER MODE'}
                         onChange={this.handleModeChange}
                     />
+                    <label htmlFor="server">Server</label>
                 </div>
+                <h3>{this.state.mode}</h3>
             </div>
         )
     }
