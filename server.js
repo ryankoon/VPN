@@ -6,8 +6,6 @@ const App = require('./app.js');
 
 //Single instance of server
 let server, socket;
-//TODO: remove hardcoded secret
-let shared_secret = 'scambooter';
 let server_nonce;
 let server_dh;
 let server_dh_key;
@@ -15,7 +13,7 @@ let server_dh_secret;
 let nonce_of_client;
 
 
-function start(host, port) {
+function start(host, port, sharedSecret) {
     return new Promise((resolve, reject) => {
         if (server === undefined) {
             server = net.createServer(listener => {
@@ -57,17 +55,20 @@ function start(host, port) {
                             nonce_of_client = data.slice(3, 15);
 
                             let aes_msg = data.slice(15, data.byteLength);
-                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret), aes_msg.toString()), 'hex');
+                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(sharedSecret), aes_msg.toString()), 'hex');
                             let nonce_of_server_from_client = aes_raw.slice(0, 12);
                             if (nonce_of_server_from_client.equals(server_nonce)) {
                                 console.log('Server authentication pass');
+                            } else {
+                                App.webSocketSend("Nonce is invalid");
+                                stop();
                             }
                             let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
                             server_dh_secret = server_dh.computeSecret(dh_key_of_client);
                             console.log('Receive Auth-2');
 
                             //Send Auth3 - server send E(Ra nonce, g^a mod p)
-                            let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client, server_dh_key]));
+                            let auth3 = aesWrapper.createAesMessage(get32B(sharedSecret), Buffer.concat([nonce_of_client, server_dh_key]));
                             send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
                             console.log('Send Auth-3');
                             break;
@@ -126,11 +127,12 @@ function send_encry(msg) {
         let encry_msg = aesWrapper.createAesMessage(server_dh_secret.slice(0, 32), Buffer.from(msg));
 
         App.webSocketSend("Sending ciphertext: " + msg);
-        send(Buffer.from('303' + encry_msg));
+        return send(Buffer.from('303' + encry_msg));
     } else {
         let msg = "Message encryption failed. Mutual Authentication failed.";
         console.error(msg);
         App.webSocketSend(msg);
+        return Promise.reject(new Error(msg));
     }
 }
 
@@ -173,5 +175,5 @@ function get32B(sdata) {
 
 //Exports
 module.exports.start = start;
-module.exports.send = send;
+module.exports.send_encry = send_encry;
 module.exports.stop = stop;

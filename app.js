@@ -17,6 +17,7 @@ const APPROOT = app.getAppPath();
 let currentMode;
 
 function webSocketSend(message) {
+    console.log(message);
     if (WebSocket) {
         WebSocket.send(message);
     }
@@ -65,11 +66,12 @@ function switchMode(req, res, next) {
  * @param next
  */
 function connectToServer(req, res, next) {
-    if (req.body && req.body.host && req.body.port) {
+    if (req.body && req.body.host && req.body.port && req.body.secret) {
         let host = req.body.host;
         let port = req.body.port;
+        let secret = req.body.secret;
 
-        VPNClient.start(host, port)
+        VPNClient.start(host, port, secret)
             .then(() => {
                 res.send(200);
             })
@@ -89,10 +91,11 @@ function connectToServer(req, res, next) {
  * @param next
  */
 function listenForClient(req, res, next) {
-    if (req.body && req.body.port) {
+    if (req.body && req.body.port && req.body.secret) {
         let port = req.body.port;
+        let secret = req.body.secret;
 
-        VPNServer.start("0.0.0.0", port)
+        VPNServer.start("0.0.0.0", port, secret)
             .then(() => {
                 res.send(200);
             })
@@ -117,9 +120,9 @@ function sendMessage(req, res, next) {
         let message = req.body.message;
 
         if (currentMode === MODES.SERVER) {
-            sendMessageHandler(res, VPNServer.send(message));
+            sendMessageHandler(res, VPNServer.send_encry(message));
         } else if (currentMode === MODES.CLIENT) {
-            sendMessageHandler(res, VPNClient.send(message));
+            sendMessageHandler(res, VPNClient.send_encry(message));
         } else {
             console.error("Invalid mode: " + currentMode);
             res.send(500, "Invalid mode. Please restart the application.");
