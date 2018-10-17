@@ -16,67 +16,68 @@ let nonce_of_client;
 function start(host, port, sharedSecret) {
     return new Promise((resolve, reject) => {
         if (server === undefined) {
+            App.webSocketSend("Server instance created.");
             server = net.createServer(listener => {
                 socket = listener;
+                App.webSocketSend("Server is connected to client.");
 
                 // Authentication on connection
-
                 // generate DH public key g and p
                 server_nonce = crypto.randomBytes(12);
 
                 //can use (2048), this number is in bits
                 server_dh = crypto.createDiffieHellman(512);
-
                 server_dh_key = server_dh.generateKeys();
 
                 // Send Auth1 - server send DH public key and nonce Rb
                 const buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
                 send(buffer);
-                console.log('Send Auth-1');
-                //console.log("Send Auth - 1: ", buffer);
-                //console.log("prime: ",server_dh.getPrime());
-                //console.log("generator: ",server_dh.getGenerator());
-                console.log("Server is connected to client.");
+                App.webSocketSend('(server sent Auth-1) Sent client DH public key and nonce');
 
                 listener.on('data', data => {
-                    App.webSocketSend("Server received: " + data);
+                    App.webSocketSend("Server received data: " + data.toString('hex'));
                     //decrypt data
 
                     if (data.byteLength < 3) {
                         console.log('Data received not valid!');
                         return;
                     }
-                    //console.log('Data received', data);
                     const code = data.toString().slice(0, 3);
                     switch (code) {
                         case '101': {
                             //Receive Auth2
                             //save nonce_client, compare nonce_server, calculate g^(ab) mode p
+                            App.webSocketSend('(server received Auth-2) Received client DH key and nonce');
                             nonce_of_client = data.slice(3, 15);
-
                             let aes_msg = data.slice(15, data.byteLength);
+                            try{
                             let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(sharedSecret), aes_msg.toString()), 'hex');
                             let nonce_of_server_from_client = aes_raw.slice(0, 12);
                             if (nonce_of_server_from_client.equals(server_nonce)) {
-                                console.log('Server authentication pass');
+                                App.webSocketSend("(server) authentication passed, nonce is correct");
                             } else {
-                                App.webSocketSend("Nonce is invalid");
+                                App.webSocketSend("(server) authentication failed, nonce is incorrect");
                                 stop();
                             }
                             let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
                             server_dh_secret = server_dh.computeSecret(dh_key_of_client);
-                            console.log('Receive Auth-2');
-
-                            //Send Auth3 - server send E(Ra nonce, g^a mod p)
+                            
+                            
+                            //Send Auth3 - server send E(Ra nonce, g^b mod p)
                             let auth3 = aesWrapper.createAesMessage(get32B(sharedSecret), Buffer.concat([nonce_of_client, server_dh_key]));
                             send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
-                            console.log('Send Auth-3');
+                            App.webSocketSend('(server sent Auth-3) sent client E(Ra nonce, g^b mod p)');
+                            App.webSocketSend('(server) secure channel established...');
+                            }catch(err){
+                                App.webSocketSend('(server) authentication failed, shared secret does not match.');
+                                stop();
+                            }
                             break;
                         }
                         case '102': {
                             //decrypt data
                             decrypt(data);
-                            send_encry("Got your message");
+                            //send_encry("Got your message");
                             break;
                         }
                         default: {
@@ -109,7 +110,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (socket) {
-            //TODO: encrypt data
+            App.webSocketSend("(server)Sending data:" + data.toString("hex"));
             socket.write(data, resolve);
         } else {
             let msg = "The server must be connected to a client first.";
@@ -122,14 +123,14 @@ function send(data) {
 //Encrypt Msg - using AES shared session key
 function send_encry(msg) {
     if (server_dh_secret) {
-        App.webSocketSend("Encrypting plaintext: " + msg);
+        App.webSocketSend("(server)Encrypting plaintext: " + msg);
 
         let encry_msg = aesWrapper.createAesMessage(server_dh_secret.slice(0, 32), Buffer.from(msg));
 
-        App.webSocketSend("Sending ciphertext: " + msg);
+        App.webSocketSend("(server)Computing ciphertext: " + encry_msg);
         return send(Buffer.from('303' + encry_msg));
     } else {
-        let msg = "Message encryption failed. Mutual Authentication failed.";
+        let msg = "Secure channel has not established...Received client DH key and nonce";
         console.error(msg);
         App.webSocketSend(msg);
         return Promise.reject(new Error(msg));
@@ -139,14 +140,18 @@ function send_encry(msg) {
 //Decrypt Msg - using AES shared session key
 function decrypt(encry_msg) {
     if (server_dh_secret) {
-        App.webSocketSend("Received ciphertext:", encry_msg);
 
         let encryted_aes_msg = encry_msg.slice(3, encry_msg.byteLength);
+        App.webSocketSend("(server)Received ciphertext:" + encryted_aes_msg.toString());
+        try{
         let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0, 32), encryted_aes_msg.toString()), 'hex');
 
-        App.webSocketSend("Decrypted message:", decrypted_aes_msg.toString());
+        App.webSocketSend("(server)Decrypted message:" + decrypted_aes_msg.toString());
+        }catch(err){
+            App.webSocketSend("(server)Cannot decrypt using shared key AES.");
+        }
     } else {
-        let msg = "Message decryption failed. Mutual Authentication failed.";
+        let msg = "Secure channel has not established...";
         console.error(msg);
         App.webSocketSend(msg);
     }

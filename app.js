@@ -20,7 +20,7 @@ let currentMode;
 function webSocketSend(message) {
     console.log(message);
     if (WebSocket) {
-        WebSocket.send(message);
+        WebSocket.send(message + "<br>");
     }
 }
 
