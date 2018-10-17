@@ -16,6 +16,7 @@ let shared_secret;
 
 
 function start(host, port, sharedSecret) {
+    //hash sharedsecret
     shared_secret = crypto.createHash('sha256').update(sharedSecret).digest('base64');
     
     return new Promise((resolve, reject) => {
@@ -140,12 +141,6 @@ function stop() {
         }
     });
 }
-
-/*function get32B(sdata) {
-    let buffer = Buffer.from(sdata);
-    if (buffer.byteLength > 32) return buffer.slice(0, 32);
-    return Buffer.from(sdata.padEnd(32, '0'));
-}*/
 
 function sendAuth1(){
     // Authentication on connection
