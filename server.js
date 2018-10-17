@@ -3,6 +3,7 @@ const net = require('net');
 const crypto = require('crypto');
 const aesWrapper = require('./component/aes-wrapper');
 const App = require('./app.js');
+const {NONCELEN, DHPRIMELEN, CODELEN} = require('./public/src/properties');
 
 //Single instance of server
 let server, socket;
@@ -15,7 +16,8 @@ let shared_secret;
 
 
 function start(host, port, sharedSecret) {
-    shared_secret = sharedSecret;
+    shared_secret = crypto.createHash('sha256').update(sharedSecret).digest('base64');
+    
     return new Promise((resolve, reject) => {
         if (server === undefined) {
             App.webSocketSend("Server instance created.");
@@ -28,12 +30,12 @@ function start(host, port, sharedSecret) {
                     App.webSocketSend("Server received data: " + data.toString('base64'));
                     
                     //Decode message
-                    if (data.byteLength < 3) {
+                    if (data.byteLength < CODELEN) {
                         let msg = 'Data received not valid!';
                         App.webSocketSend(msg);
                         return;
                     }
-                    const code = data.toString().slice(0, 3);
+                    const code = data.toString().slice(0, CODELEN);
                     switch (code) {
                         case '101': {
                             //Receive Auth2
@@ -139,20 +141,18 @@ function stop() {
     });
 }
 
-function get32B(sdata) {
+/*function get32B(sdata) {
     let buffer = Buffer.from(sdata);
     if (buffer.byteLength > 32) return buffer.slice(0, 32);
     return Buffer.from(sdata.padEnd(32, '0'));
-}
+}*/
 
 function sendAuth1(){
     // Authentication on connection
     // generate DH public key g and p
     App.webSocketSend('(server) Generating DH prime, generator and server secret key and nonce Rb...');
-    server_nonce = crypto.randomBytes(12);
-
-    //can use (2048), this number is in bits
-    server_dh = crypto.createDiffieHellman(512);
+    server_nonce = crypto.randomBytes(NONCELEN);
+    server_dh = crypto.createDiffieHellman(DHPRIMELEN*8);
     server_dh_key = server_dh.generateKeys();
 
     // Send Auth1 - server send DH public key and nonce Rb
@@ -165,7 +165,7 @@ function sendAuth3(){
     //Send Auth3 - server send E(Ra nonce, g^b mod p)
     if(nonce_of_client && server_dh_key){
     App.webSocketSend('(server) Preparing auth-3 encryption...');
-    let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client, server_dh_key]));
+    let auth3 = aesWrapper.createAesMessage(Buffer.from(shared_secret,'base64'), Buffer.concat([nonce_of_client, server_dh_key]));
     send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
     App.webSocketSend('(server sent Auth-3) Sent client E(Ra nonce, g^b mod p)');
     App.webSocketSend('(server) Secure channel established...');
@@ -181,7 +181,7 @@ function rcvAuth2(data){
         App.webSocketSend('(server) Authenticating...');
         nonce_of_client = data.slice(3, 15);
         let aes_msg = data.slice(15, data.byteLength);
-        let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret), aes_msg.toString()), 'hex');
+        let aes_raw = Buffer.from(aesWrapper.decrypt(Buffer.from(shared_secret,'base64'), aes_msg.toString()), 'hex');
         let nonce_of_server_from_client = aes_raw.slice(0, 12);
         if (nonce_of_server_from_client.equals(server_nonce)) {
             App.webSocketSend("(server) Authentication passed, nonce is correct");
