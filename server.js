@@ -11,73 +11,40 @@ let server_dh;
 let server_dh_key;
 let server_dh_secret;
 let nonce_of_client;
+let shared_secret;
 
 
 function start(host, port, sharedSecret) {
+    shared_secret = sharedSecret;
     return new Promise((resolve, reject) => {
         if (server === undefined) {
             App.webSocketSend("Server instance created.");
             server = net.createServer(listener => {
                 socket = listener;
                 App.webSocketSend("Server is connected to client.");
-
-                // Authentication on connection
-                // generate DH public key g and p
-                server_nonce = crypto.randomBytes(12);
-
-                //can use (2048), this number is in bits
-                server_dh = crypto.createDiffieHellman(512);
-                server_dh_key = server_dh.generateKeys();
-
-                // Send Auth1 - server send DH public key and nonce Rb
-                const buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
-                send(buffer);
-                App.webSocketSend('(server sent Auth-1) Sent client DH public key and nonce');
+                sendAuth1();
 
                 listener.on('data', data => {
-                    App.webSocketSend("Server received data: " + data.toString('hex'));
-                    //decrypt data
-
+                    App.webSocketSend("Server received data: " + data.toString('base64'));
+                    
+                    //Decode message
                     if (data.byteLength < 3) {
-                        console.log('Data received not valid!');
+                        let msg = 'Data received not valid!';
+                        App.webSocketSend(msg);
                         return;
                     }
                     const code = data.toString().slice(0, 3);
                     switch (code) {
                         case '101': {
                             //Receive Auth2
-                            //save nonce_client, compare nonce_server, calculate g^(ab) mode p
-                            App.webSocketSend('(server received Auth-2) Received client DH key and nonce');
-                            nonce_of_client = data.slice(3, 15);
-                            let aes_msg = data.slice(15, data.byteLength);
-                            try{
-                            let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(sharedSecret), aes_msg.toString()), 'hex');
-                            let nonce_of_server_from_client = aes_raw.slice(0, 12);
-                            if (nonce_of_server_from_client.equals(server_nonce)) {
-                                App.webSocketSend("(server) authentication passed, nonce is correct");
-                            } else {
-                                App.webSocketSend("(server) authentication failed, nonce is incorrect");
-                                stop();
-                            }
-                            let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
-                            server_dh_secret = server_dh.computeSecret(dh_key_of_client);
-                            
-                            
-                            //Send Auth3 - server send E(Ra nonce, g^b mod p)
-                            let auth3 = aesWrapper.createAesMessage(get32B(sharedSecret), Buffer.concat([nonce_of_client, server_dh_key]));
-                            send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
-                            App.webSocketSend('(server sent Auth-3) sent client E(Ra nonce, g^b mod p)');
-                            App.webSocketSend('(server) secure channel established...');
-                            }catch(err){
-                                App.webSocketSend('(server) authentication failed, shared secret does not match.');
-                                stop();
+                            if(rcvAuth2(data)){    
+                                sendAuth3();
                             }
                             break;
                         }
                         case '102': {
-                            //decrypt data
+                            //Decrypt data
                             decrypt(data);
-                            //send_encry("Got your message");
                             break;
                         }
                         default: {
@@ -110,7 +77,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (socket) {
-            App.webSocketSend("(server)Sending data:" + data.toString("hex"));
+            App.webSocketSend("(server)Sending data:" + data.toString("base64"));
             socket.write(data, resolve);
         } else {
             let msg = "The server must be connected to a client first.";
@@ -176,6 +143,62 @@ function get32B(sdata) {
     let buffer = Buffer.from(sdata);
     if (buffer.byteLength > 32) return buffer.slice(0, 32);
     return Buffer.from(sdata.padEnd(32, '0'));
+}
+
+function sendAuth1(){
+    // Authentication on connection
+    // generate DH public key g and p
+    App.webSocketSend('(server) Generating DH prime, generator and server secret key and nonce Rb...');
+    server_nonce = crypto.randomBytes(12);
+
+    //can use (2048), this number is in bits
+    server_dh = crypto.createDiffieHellman(512);
+    server_dh_key = server_dh.generateKeys();
+
+    // Send Auth1 - server send DH public key and nonce Rb
+    const buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
+    send(buffer);
+    App.webSocketSend('(server sent Auth-1) Sent client DH p,g and nonce Rb');    
+}
+
+function sendAuth3(){
+    //Send Auth3 - server send E(Ra nonce, g^b mod p)
+    if(nonce_of_client && server_dh_key){
+    App.webSocketSend('(server) Preparing auth-3 encryption...');
+    let auth3 = aesWrapper.createAesMessage(get32B(shared_secret), Buffer.concat([nonce_of_client, server_dh_key]));
+    send(Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]));
+    App.webSocketSend('(server sent Auth-3) Sent client E(Ra nonce, g^b mod p)');
+    App.webSocketSend('(server) Secure channel established...');
+    }else{
+        App.webSocketSend('(server sent Auth-3) Cannot send, since server has not received Auth-2 message from client');
+    }
+}
+
+//Receive Auth2 - save nonce_client, compare nonce_server, calculate g^(ab) mode p
+function rcvAuth2(data){
+    try{
+        App.webSocketSend('(server received Auth-2) Received client DH key and nonce');
+        App.webSocketSend('(server) Authenticating...');
+        nonce_of_client = data.slice(3, 15);
+        let aes_msg = data.slice(15, data.byteLength);
+        let aes_raw = Buffer.from(aesWrapper.decrypt(get32B(shared_secret), aes_msg.toString()), 'hex');
+        let nonce_of_server_from_client = aes_raw.slice(0, 12);
+        if (nonce_of_server_from_client.equals(server_nonce)) {
+            App.webSocketSend("(server) Authentication passed, nonce is correct");
+        } else {
+            App.webSocketSend("(server) Authentication failed, nonce is incorrect");
+            stop();
+            return 0;
+        }
+        let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
+        server_dh_secret = server_dh.computeSecret(dh_key_of_client);
+        App.webSocketSend('(server) Computed session key');
+    }catch(err){
+        App.webSocketSend('(server) Authentication failed, shared secret does not match.');
+        stop();
+        return 0;
+    }
+    return 1;
 }
 
 //Exports
