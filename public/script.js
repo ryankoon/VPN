@@ -483,7 +483,7 @@ var LoggingConsole = function (_React$Component5) {
     }, {
         key: "addLog",
         value: function addLog(data) {
-            var log = this.state.Log + data;
+            var log = this.state.Log + '\n' + data;
             this.setState({ Log: log });
         }
     }, {

@@ -376,7 +376,7 @@ class LoggingConsole extends React.Component {
     }
 
     addLog(data) {
-        let log = this.state.Log + data;
+        let log = this.state.Log + '\n' + data;
         this.setState({Log: log});
     }
 

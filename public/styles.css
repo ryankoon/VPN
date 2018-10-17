@@ -61,7 +61,10 @@ button {
 }
 #logs {
     width: 100%;
-    height: 500px;
+    height: 500px;  
+}
+#logs div{
+    white-space: pre-line;
 }
 #container-step {
     margin: 10px;
