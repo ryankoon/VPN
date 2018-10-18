@@ -6,6 +6,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+/* eslint-disable no-undef */
 window.addEventListener("load", setup);
 var e = React.createElement;
 var logConsole;
@@ -471,6 +472,17 @@ var LoggingConsole = function (_React$Component5) {
         socket.addEventListener('message', function (event) {
             console.log('Websocket message: ', event.data);
             _this5.addLog(event.data);
+        });
+        socket.addEventListener('close', function (event) {
+            var msg = "Websocket closed. Application may need to be restarted to work properly.";
+            console.log(msg, event);
+            _this5.addLog(msg);
+            _this5.addLog(event.reason);
+        });
+        socket.addEventListener('error', function (event) {
+            console.log('Websocket error: ', event);
+            _this5.addLog("Websocket error. Application may need to be restarted to work properly.");
+            _this5.addLog(event);
         });
         return _this5;
     }
