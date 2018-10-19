@@ -2,7 +2,6 @@ const {UIPORT} = require("./public/src/properties");
 require("./app.js");
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron');
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
@@ -10,6 +9,11 @@ let mainWindow;
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({width: 1200, height: 1000});
+
+    // Clear cache.
+    mainWindow.webContents.session.clearCache(() => {
+    });
+
     // and load the index.html of the app.
     mainWindow.loadURL('http://127.0.0.1:' + UIPORT);
 
