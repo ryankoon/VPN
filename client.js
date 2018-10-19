@@ -99,7 +99,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (client) {
-            App.webSocketSend("(client) Sending data:" + data.toString("hex"));
+            App.webSocketSend("(client) Sending data: " + data.toString("hex"));
             client.write(data, resolve);
         } else {
             let msg = "The client connection must be started first.";
@@ -172,15 +172,15 @@ function get32B(sdata) {
 
 function broadcastDHValuesReceived(dh_generator, dh_prime) {
     App.webSocketSend('<---DH exchange values received from server----');
-    App.webSocketSend('Received server nonce: ' + nonce_of_server.toString("hex"));
-    App.webSocketSend("Received server generator: " + dh_generator.toString("hex"));
-    App.webSocketSend('Received server prime: ' + dh_prime.toString("hex"));
+    App.webSocketSend('Received server nonce (Rb): ' + nonce_of_server.toString("hex"));
+    App.webSocketSend("Received generator (g): " + dh_generator.toString("hex"));
+    App.webSocketSend('Received prime (p): ' + dh_prime.toString("hex"));
     App.webSocketSend('<----------------------------------------------');
 }
 
 //Receive Auth1 - store nonce Rb and DH g and p
 function rcvAuth1(data) {
-    App.webSocketSend('(client received Auth-1) received DH public key and nonce from server.');
+    App.webSocketSend('(client received Auth-1) Received generator, prime and nonce from server.');
     nonce_of_server = data.slice(CODELEN, CODELEN + NONCELEN);
     client_nonce = crypto.randomBytes(NONCELEN);
 
@@ -189,7 +189,7 @@ function rcvAuth1(data) {
 
     broadcastDHValuesReceived(dh_generator, dh_prime);
 
-    App.webSocketSend('(client) Generating DH client secret key and nounce Ra');
+    App.webSocketSend('(client) Generating DH client secret key and nonce Ra');
     client_dh = crypto.createDiffieHellman(dh_prime, dh_generator);
     client_dh_key = client_dh.generateKeys();
 }
@@ -197,8 +197,8 @@ function rcvAuth1(data) {
 
 function broadcastDHServerConfirmationValues(nonce_of_client_from_server, dh_key_of_server) {
     App.webSocketSend('---Decrypted response values received from server---');
-    App.webSocketSend('Client nonce from server: ' + nonce_of_client_from_server.toString("hex"));
-    App.webSocketSend("Received server DH key: " + dh_key_of_server.toString("hex"));
+    App.webSocketSend('Client nonce from server (Ra): ' + nonce_of_client_from_server.toString("hex"));
+    App.webSocketSend("Received server DH public key (g^b mod p): " + dh_key_of_server.toString("hex"));
     App.webSocketSend('----------------------------------------------------');
 }
 
@@ -208,17 +208,23 @@ function forgetDHValues() {
     client_dh = undefined;
 }
 
+function broadcastSessionKey() {
+    App.webSocketSend('####Session key####');
+    App.webSocketSend(client_dh_secret.toString("hex"));
+    App.webSocketSend('#######################################');
+}
+
 //Receive Auth3 - extract g^a mod p, calculate session key = g^ab mod p
 function rcvAuth3(data) {
     try {
-        App.webSocketSend('(client received Auth-3) received server DH key and nonce from server.');
+        App.webSocketSend('(client received Auth-3) Received server DH public key and client nonce from server.');
 
         let aes_msg2 = data.slice(3, data.byteLength);
         let aes_raw2 = Buffer.from(aesWrapper.decrypt(Buffer.from(shared_secret, 'base64'), aes_msg2.toString()), 'hex');
         let nonce_of_client_from_server = aes_raw2.slice(0, NONCELEN);
         let dh_key_of_server = aes_raw2.slice(NONCELEN, Number(aes_raw2.byteLength));
 
-        App.webSocketSend('Encrypted data: ' + aes_raw2.toString("hex"));
+        App.webSocketSend('Dencrypted data: ' + aes_raw2.toString("hex"));
 
         App.webSocketSend('(client) Authenticating...');
 
@@ -229,7 +235,8 @@ function rcvAuth3(data) {
             App.webSocketSend("(client) Authentication passed. Nonce is correct");
             App.webSocketSend('(client) Secure channel established...');
             client_dh_secret = client_dh.computeSecret(dh_key_of_server);
-            App.webSocketSend('(client) Computed session key: ' + client_dh_secret.toString("hex"));
+            App.webSocketSend('Computed session key.');
+            broadcastSessionKey();
             forgetDHValues();
             App.broadcastReadyToSendMessages();
         } else {
@@ -246,12 +253,15 @@ function rcvAuth3(data) {
 }
 
 function broadcastDHValuesToSend() {
+    App.webSocketSend('####Client private key/Secret exponent (a)####');
+    App.webSocketSend(client_dh.getPrivateKey("hex"));
+    App.webSocketSend('#######################################');
+    App.webSocketSend('Using generator (g): ' + client_dh.getGenerator("hex"));
+    App.webSocketSend('Using prime (p): ' + client_dh.getPrime("hex"));
     App.webSocketSend('----Values to send from client to server--->');
-    App.webSocketSend('Server nonce: ' + nonce_of_server.toString("hex"));
-    App.webSocketSend('Client nonce: ' + client_nonce.toString("hex"));
-    App.webSocketSend('Client generator: ' + client_dh.getGenerator().toString("hex"));
-    App.webSocketSend('Client prime: ' + client_dh.getPrime().toString("hex"));
-    App.webSocketSend('Client DH key: ' + client_dh_key.toString("hex"));
+    App.webSocketSend('Client nonce (Ra): ' + client_nonce.toString("hex"));
+    App.webSocketSend('Server nonce (Rb): ' + nonce_of_server.toString("hex"));
+    App.webSocketSend('Client DH public key (g^a mod p): ' + client_dh_key.toString("hex"));
     App.webSocketSend('------------------------------------------->');
 }
 
@@ -275,11 +285,11 @@ function auth2_send() {
         send(auth2_buffer)
             .then(() => {
                 nextStep = CLIENT_STEPS.AUTH_3_WAIT;
-                App.webSocketSend('(client sent Auth-2) sent server E(Rb nonce, g^a mod p)');
+                App.webSocketSend('(client sent Auth-2) sent server Ra, E(Rb nonce, g^a mod p, SharedSecret)');
                 broadcastWaitingForServer()
             })
             .catch(err => {
-                App.webSocketSend('Socket error sending Auth-2 E(Ra nonce, g^b mod p):');
+                App.webSocketSend('Socket error sending Auth-2 - Ra, E(Rb nonce, g^a mod p, SharedSecret): ');
                 App.webSocketSend(err);
                 App.webSocketSend('Press "Continue" to retry.');
                 App.broadcastContinueHint();
