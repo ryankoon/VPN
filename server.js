@@ -221,6 +221,12 @@ function prepareAuth3() {
     }
 }
 
+function forgetDHValues() {
+    App.webSocketSend("Forgetting server DH values for perfect forward secrecy.");
+    server_dh_key = undefined;
+    server_dh = undefined;
+}
+
 function auth3_Send() {
     if (auth3_buffer) {
         send(auth3_buffer)
@@ -228,6 +234,7 @@ function auth3_Send() {
                 App.webSocketSend('(server sent Auth-3) Sent client E(Ra nonce, g^b mod p)');
                 App.webSocketSend('(server) Secure channel established...');
                 nextStep = SERVER_STEPS.AUTHENTICATED
+                forgetDHValues();
             })
             .catch(err => {
                 App.webSocketSend('Socket error sending cclient E(Ra nonce, g^b mod p):');

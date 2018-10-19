@@ -194,6 +194,12 @@ function broadcastDHServerConfirmationValues(nonce_of_client_from_server, dh_key
     App.webSocketSend('---------------------------------------------');
 }
 
+function forgetDHValues() {
+    App.webSocketSend("Forgetting client DH values for perfect forward secrecy.");
+    client_dh_key = undefined;
+    client_dh = undefined;
+}
+
 //Receive Auth3 - extract g^a mod p, calculate session key = g^ab mod p
 function rcvAuth3(data) {
     try {
@@ -213,21 +219,20 @@ function rcvAuth3(data) {
         if (nonce_of_client_from_server.equals(client_nonce)) {
             nextStep = CLIENT_STEPS.AUTHENTICATED;
             App.webSocketSend("(client) Authentication passed. Nonce is correct");
-        } else {
-            App.webSocketSend("(client) Authentication failed. Unexpected nonce");
-            stop();
-            return 0;
+            App.webSocketSend('(client) Secure channel established...');
+            client_dh_secret = client_dh.computeSecret(dh_key_of_server);
+            App.webSocketSend('Computed session key: ' + client_dh_secret);
+            forgetDHValues();
+            return 1;
         }
-        App.webSocketSend('(client) Secure channel established...');
-        client_dh_secret = client_dh.computeSecret(dh_key_of_server);
-        App.webSocketSend('Computed session key: ' + client_dh_secret);
+        App.webSocketSend("(client) Authentication failed. Unexpected nonce");
+        stop();
+        return 0;
     } catch (err) {
         App.webSocketSend('(client) Authentication failed, shared secret does not match.');
         stop();
         return 0;
     }
-    return 1;
-    //TODO: want to erase client_dh and client_dh_key?
 }
 
 function broadcastDHValuesToSend() {
