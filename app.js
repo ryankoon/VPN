@@ -34,8 +34,9 @@ function proceed(req, res, next) {
     if (currentMode === MODES.SERVER) {
         promiseHandler(res, VPNServer.executeNextStep());
     } else if (currentMode === MODES.CLIENT) {
-        //TODO
-        // promiseHandler(res, VPNClient.executeNextStep());
+        promiseHandler(res, VPNClient.executeNextStep());
+    } else {
+        res.send(400, new Error("Please select a mode: [server, client]"));
     }
     next();
 }
