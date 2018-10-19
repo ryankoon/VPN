@@ -98,7 +98,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (client) {
-            App.webSocketSend("(client)Sending data:" + data.toString("base64"));
+            App.webSocketSend("(client) Sending data:" + data.toString("base64"));
             client.write(data, resolve);
         } else {
             let msg = "The client connection must be started first.";
@@ -164,26 +164,27 @@ function get32B(sdata) {
 }
 
 function broadcastDHValuesReceived(dh_generator, dh_prime) {
-    App.webSocketSend('---DH exchange values received from server---');
+    App.webSocketSend('<---DH exchange values received from server----');
     App.webSocketSend('Received server nonce: ' + nonce_of_server.toString("hex"));
     App.webSocketSend("Received server generator: " + dh_generator.toString("hex"));
     App.webSocketSend('Received server prime: ' + dh_prime.toString("hex"));
-    App.webSocketSend('---------------------------------------------');
+    App.webSocketSend('<----------------------------------------------');
 }
 
 //Receive Auth1 - store nonce Rb and DH g and p
 function rcvAuth1(data) {
     App.webSocketSend('(client received Auth-1) received DH public key and nonce from server.');
-    App.webSocketSend('(client): Generating DH client secret key and nounce Ra');
     nonce_of_server = data.slice(CODELEN, CODELEN + NONCELEN);
     client_nonce = crypto.randomBytes(NONCELEN);
 
     let dh_prime = data.slice(CODELEN + NONCELEN, CODELEN + NONCELEN + DHPRIMELEN);
     let dh_generator = data.slice(CODELEN + NONCELEN + DHPRIMELEN, CODELEN + NONCELEN + DHPRIMELEN + 1);
-    client_dh = crypto.createDiffieHellman(dh_prime, dh_generator);
-    client_dh_key = client_dh.generateKeys();
 
     broadcastDHValuesReceived(dh_generator, dh_prime);
+
+    App.webSocketSend('(client): Generating DH client secret key and nounce Ra');
+    client_dh = crypto.createDiffieHellman(dh_prime, dh_generator);
+    client_dh_key = client_dh.generateKeys();
 }
 
 
@@ -191,7 +192,7 @@ function broadcastDHServerConfirmationValues(nonce_of_client_from_server, dh_key
     App.webSocketSend('---Decrypted response values received from server---');
     App.webSocketSend('Client nonce from server: ' + nonce_of_client_from_server.toString("hex"));
     App.webSocketSend("Received server DH key: " + dh_key_of_server.toString("hex"));
-    App.webSocketSend('---------------------------------------------');
+    App.webSocketSend('----------------------------------------------------');
 }
 
 function forgetDHValues() {
@@ -221,28 +222,29 @@ function rcvAuth3(data) {
             App.webSocketSend("(client) Authentication passed. Nonce is correct");
             App.webSocketSend('(client) Secure channel established...');
             client_dh_secret = client_dh.computeSecret(dh_key_of_server);
-            App.webSocketSend('Computed session key: ' + client_dh_secret);
+            App.webSocketSend('(client) Computed session key: ' + client_dh_secret);
             forgetDHValues();
-            return 1;
+        } else {
+            App.webSocketSend("(client) Authentication failed. Unexpected nonce");
+            stop();
+            return 0;
         }
-        App.webSocketSend("(client) Authentication failed. Unexpected nonce");
-        stop();
-        return 0;
     } catch (err) {
         App.webSocketSend('(client) Authentication failed, shared secret does not match.');
         stop();
         return 0;
     }
+    return 1;
 }
 
 function broadcastDHValuesToSend() {
-    App.webSocketSend('---Values to send from client to server---');
+    App.webSocketSend('----Values to send from client to server--->');
     App.webSocketSend('Server nonce: ' + nonce_of_server);
     App.webSocketSend('Client nonce: ' + client_nonce.toString("hex"));
     App.webSocketSend('Client generator: ' + client_dh.getGenerator().toString("hex"));
     App.webSocketSend('Client prime: ' + client_dh.getPrime().toString("hex"));
     App.webSocketSend('Client DH key: ' + client_dh_key.toString("hex"));
-    App.webSocketSend('------------------------------------------');
+    App.webSocketSend('------------------------------------------->');
 }
 
 
