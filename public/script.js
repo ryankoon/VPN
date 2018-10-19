@@ -517,13 +517,40 @@ var LoggingConsole = function (_React$Component5) {
 var Step = function (_React$Component6) {
     _inherits(Step, _React$Component6);
 
-    function Step() {
+    function Step(props) {
         _classCallCheck(this, Step);
 
-        return _possibleConstructorReturn(this, (Step.__proto__ || Object.getPrototypeOf(Step)).apply(this, arguments));
+        var _this6 = _possibleConstructorReturn(this, (Step.__proto__ || Object.getPrototypeOf(Step)).call(this, props));
+
+        _this6.handleContinue = _this6.handleContinue.bind(_this6);
+        return _this6;
     }
 
     _createClass(Step, [{
+        key: "handleContinue",
+        value: function handleContinue() {
+            fetch('./continue', {
+                method: 'post',
+                headers: {
+                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                body: ""
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    console.log("ERROR: " + response.status);
+                    logConsole.addLog("ERROR: " + response.status);
+                    // PARSE
+                    response.json().then(function (data) {
+                        console.log(data);
+                    }).catch(function (err) {
+                        console.log(err);
+                    });
+                }
+            }).catch(function (err) {
+                console.log("Fetch Error :-S", err);
+            });
+        }
+    }, {
         key: "render",
         value: function render() {
             return React.createElement(
@@ -531,7 +558,7 @@ var Step = function (_React$Component6) {
                 null,
                 React.createElement(
                     "button",
-                    { id: "continue-btn" },
+                    { id: "continue-btn", onClick: this.handleContinue },
                     "Continue"
                 )
             );

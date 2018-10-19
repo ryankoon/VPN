@@ -393,10 +393,48 @@ class LoggingConsole extends React.Component {
 }
 
 class Step extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.handleContinue = this.handleContinue.bind(this);
+    }
+
+    handleContinue() {
+        fetch('./continue', {
+            method: 'post',
+            headers: {
+                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            body: ""
+        })
+            .then(
+                function (response) {
+                    if (response.status !== 200) {
+                        console.log("ERROR: " + response.status);
+                        logConsole.addLog("ERROR: " + response.status);
+                        // PARSE
+                        response.json()
+                            .then(
+                                function (data) {
+                                    console.log(data);
+                                })
+                            .catch(err => {
+                                console.log(err);
+                            });
+                    }
+                }
+            )
+            .catch(
+                function (err) {
+                    console.log("Fetch Error :-S", err);
+                }
+            );
+    }
+
     render() {
         return (
             <div>
-                <button id="continue-btn">Continue</button>
+                <button id="continue-btn" onClick={this.handleContinue}>Continue</button>
             </div>
         )
     }
