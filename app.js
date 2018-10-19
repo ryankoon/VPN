@@ -24,9 +24,19 @@ function webSocketSend(message) {
     }
 }
 
+/**
+ * Stepping
+ * @param req
+ * @param res
+ * @param next
+ */
 function proceed(req, res, next) {
-    //TODO: Allow stepping
-    console.log("No-op: Continue request received.");
+    if (currentMode === MODES.SERVER) {
+        promiseHandler(res, VPNServer.executeNextStep());
+    } else if (currentMode === MODES.CLIENT) {
+        //TODO
+        // promiseHandler(res, VPNClient.executeNextStep());
+    }
     next();
 }
 
@@ -121,9 +131,9 @@ function sendMessage(req, res, next) {
         let message = req.body.message;
 
         if (currentMode === MODES.SERVER) {
-            sendMessageHandler(res, VPNServer.send_encry(message));
+            promiseHandler(res, VPNServer.send_encry(message));
         } else if (currentMode === MODES.CLIENT) {
-            sendMessageHandler(res, VPNClient.send_encry(message));
+            promiseHandler(res, VPNClient.send_encry(message));
         } else {
             console.error("Invalid mode: " + currentMode);
             res.send(500, "Invalid mode. Please restart the application.");
@@ -134,7 +144,7 @@ function sendMessage(req, res, next) {
     next();
 }
 
-function sendMessageHandler(response, promise) {
+function promiseHandler(response, promise) {
     promise
         .then(() => {
             response.send(200);
