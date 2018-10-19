@@ -80,7 +80,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (socket) {
-            App.webSocketSend("(server)Sending data:" + data.toString("base64"));
+            App.webSocketSend("(server)Sending data: " + data.toString("base64"));
             socket.write(data, resolve);
         } else {
             let msg = "The server must be connected to a client first.";
@@ -100,7 +100,7 @@ function send_encry(msg) {
         App.webSocketSend("(server)Computing ciphertext: " + encry_msg);
         return send(Buffer.from('303' + encry_msg));
     } else {
-        let msg = "Secure channel has not established...Received client DH key and nonce";
+        let msg = "Secure channel has not established...";
         console.error(msg);
         App.webSocketSend(msg);
         return Promise.reject(new Error(msg));
@@ -112,11 +112,11 @@ function decrypt(encry_msg) {
     if (server_dh_secret) {
 
         let encryted_aes_msg = encry_msg.slice(3, encry_msg.byteLength);
-        App.webSocketSend("(server)Received ciphertext:" + encryted_aes_msg.toString());
+        App.webSocketSend("(server)Received ciphertext: " + encryted_aes_msg.toString());
         try{
         let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0, 32), encryted_aes_msg.toString()), 'hex');
 
-        App.webSocketSend("(server)Decrypted message:" + decrypted_aes_msg.toString());
+        App.webSocketSend("(server)Decrypted message: " + decrypted_aes_msg.toString());
         }catch(err){
             App.webSocketSend("(server)Cannot decrypt using shared key AES.");
         }
@@ -143,8 +143,7 @@ function stop() {
 }
 
 function sendAuth1(){
-    // Authentication on connection
-    // generate DH public key g and p
+    // Authentication on connection, generate DH public key g and p
     App.webSocketSend('(server) Generating DH prime, generator and server secret key and nonce Rb...');
     server_nonce = crypto.randomBytes(NONCELEN);
     server_dh = crypto.createDiffieHellman(DHPRIMELEN*8);

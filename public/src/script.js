@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 window.addEventListener("load", setup);
 const e = React.createElement;
 var logConsole;
@@ -368,6 +369,17 @@ class LoggingConsole extends React.Component {
         socket.addEventListener('message', event => {
             console.log('Websocket message: ', event.data);
             this.addLog(event.data);
+        });
+        socket.addEventListener('close', event => {
+            let msg = "Websocket closed. Application may need to be restarted to work properly.";
+            console.log(msg, event);
+            this.addLog(msg);
+            this.addLog(event.reason);
+        });
+        socket.addEventListener('error', event => {
+            console.log('Websocket error: ', event);
+            this.addLog("Websocket error. Application may need to be restarted to work properly.");
+            this.addLog(event);
         });
     }
 
