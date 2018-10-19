@@ -170,6 +170,15 @@ function stopConnections() {
     return Promise.reject(new Error("Invalid Mode"));
 }
 
+
+function broadcastContinueHint() {
+    webSocketSend('>>>>>>PRESS CONTINUE BUTTON>>>>>>');
+}
+
+function broadcastReadyToSendMessages() {
+    webSocketSend('+++++++Ready to send/receive messages+++++++');
+}
+
 /**
  * Starts serving the UI to set up a connection.
  */
@@ -198,3 +207,5 @@ serveUI();
 
 //Exports
 module.exports.webSocketSend = webSocketSend;
+module.exports.broadcastContinueHint = broadcastContinueHint;
+module.exports.broadcastReadyToSendMessages = broadcastReadyToSendMessages;

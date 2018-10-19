@@ -82,6 +82,7 @@ function start(host, port, sharedSecret) {
             });
 
             server.listen(port, host, resolve);
+            broadcastWaitingForClient();
         } else {
             let msg = "Stop the server before starting a new connection.";
             reject(new Error(msg));
@@ -129,8 +130,8 @@ function decrypt(encry_msg) {
         App.webSocketSend("(server)Received ciphertext: " + encryted_aes_msg.toString());
         try {
             let decrypted_aes_msg = Buffer.from(aesWrapper.decrypt(server_dh_secret.slice(0, 32), encryted_aes_msg.toString()), 'hex');
-
             App.webSocketSend("(server)Decrypted message: " + decrypted_aes_msg.toString());
+            broadcastDecryptedMessage(decrypted_aes_msg.toString())
         } catch (err) {
             App.webSocketSend("(server)Cannot decrypt using shared key AES.");
         }
@@ -139,6 +140,12 @@ function decrypt(encry_msg) {
         console.error(msg);
         App.webSocketSend(msg);
     }
+}
+
+function broadcastDecryptedMessage(msg) {
+    App.webSocketSend("----------------------MESSAGE FROM CLIENT----------------------");
+    App.webSocketSend(msg);
+    App.webSocketSend("---------------------------------------------------------------");
 }
 
 function stop() {
@@ -190,6 +197,7 @@ function auth1_SetupServerDH() {
     // Store buffer for next step of Auth1 (server send DH public key and nonce Rb to client)
     auth1_dh_buffer = Buffer.concat([Buffer.from('301'), server_nonce, server_dh.getPrime(), server_dh.getGenerator()]);
     nextStep = SERVER_STEPS.AUTH_1;
+    App.broadcastContinueHint();
 }
 
 function auth1_Send() {
@@ -198,11 +206,13 @@ function auth1_Send() {
             .then(() => {
                 nextStep = SERVER_STEPS.AUTH_2_WAIT;
                 App.webSocketSend('(server sent Auth-1) Sent client the server DH prime, generator and nonce Rb');
+                broadcastWaitingForClient();
             })
             .catch(err => {
                 App.webSocketSend('Socket error sending client the server DH prime, generator and nonce Rb:');
                 App.webSocketSend(err);
                 App.webSocketSend('Press "Continue" to retry.');
+                App.broadcastContinueHint();
             });
     } else {
         App.webSocketSend('Server DH has not been configured (Auth-1). Reconfiguring...');
@@ -225,9 +235,11 @@ function prepareAuth3() {
         auth3_buffer = Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]);
         broadcastDHValuesToConfirm();
         nextStep = SERVER_STEPS.AUTH_3;
+        App.broadcastContinueHint();
     } else {
         App.webSocketSend('Cannot prepare Auth-3 since server has not received Auth-2 message from client');
         nextStep = SERVER_STEPS.AUTH_2_WAIT;
+        broadcastWaitingForClient();
     }
 }
 
@@ -243,8 +255,9 @@ function auth3_Send() {
             .then(() => {
                 App.webSocketSend('(server sent Auth-3) Sent client E(Ra nonce, g^b mod p)');
                 App.webSocketSend('(server) Secure channel established...');
-                nextStep = SERVER_STEPS.AUTHENTICATED
+                nextStep = SERVER_STEPS.AUTHENTICATED;
                 forgetDHValues();
+                App.broadcastReadyToSendMessages();
             })
             .catch(err => {
                 App.webSocketSend('Socket error sending cclient E(Ra nonce, g^b mod p):');
@@ -324,6 +337,10 @@ function executeNextStep() {
             reject(new Error(errMsg));
         }
     });
+}
+
+function broadcastWaitingForClient() {
+    App.webSocketSend('......Waiting for Client......');
 }
 
 //Exports
