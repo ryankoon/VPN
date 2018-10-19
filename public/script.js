@@ -499,8 +499,25 @@ var LoggingConsole = function (_React$Component5) {
             this.setState({ Log: log });
         }
     }, {
+        key: "scrollToBottom",
+        value: function scrollToBottom() {
+            this.endAnchor.scrollIntoView({ behavior: "smooth" });
+        }
+    }, {
+        key: "componentDidMount",
+        value: function componentDidMount() {
+            this.scrollToBottom();
+        }
+    }, {
+        key: "componentDidUpdate",
+        value: function componentDidUpdate() {
+            this.scrollToBottom();
+        }
+    }, {
         key: "render",
         value: function render() {
+            var _this6 = this;
+
             return React.createElement(
                 "div",
                 null,
@@ -517,7 +534,15 @@ var LoggingConsole = function (_React$Component5) {
                 React.createElement(
                     "div",
                     { id: "log-view" },
-                    this.state.Log
+                    React.createElement(
+                        "div",
+                        null,
+                        this.state.Log
+                    ),
+                    React.createElement("div", { style: { float: "left", clear: "both" },
+                        ref: function ref(el) {
+                            _this6.endAnchor = el;
+                        } })
                 )
             );
         }
@@ -532,10 +557,10 @@ var Step = function (_React$Component6) {
     function Step(props) {
         _classCallCheck(this, Step);
 
-        var _this6 = _possibleConstructorReturn(this, (Step.__proto__ || Object.getPrototypeOf(Step)).call(this, props));
+        var _this7 = _possibleConstructorReturn(this, (Step.__proto__ || Object.getPrototypeOf(Step)).call(this, props));
 
-        _this6.handleContinue = _this6.handleContinue.bind(_this6);
-        return _this6;
+        _this7.handleContinue = _this7.handleContinue.bind(_this7);
+        return _this7;
     }
 
     _createClass(Step, [{

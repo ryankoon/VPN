@@ -392,12 +392,31 @@ class LoggingConsole extends React.Component {
         this.setState({Log: log});
     }
 
+    scrollToBottom() {
+        this.endAnchor.scrollIntoView({behavior: "smooth"});
+    }
+
+    componentDidMount() {
+        this.scrollToBottom();
+    }
+
+    componentDidUpdate() {
+        this.scrollToBottom();
+    }
+
     render() {
         return (
             <div>
                 <button onClick={this.clearLog}>Clear Log</button>
                 <h3>Log:</h3>
-                <div id="log-view">{this.state.Log}</div>
+                <div id="log-view">
+                    <div>{this.state.Log}</div>
+                    <div style={{float: "left", clear: "both"}}
+                         ref={el => {
+                             this.endAnchor = el;
+                         }}>
+                    </div>
+                </div>
             </div>
         )
     }
