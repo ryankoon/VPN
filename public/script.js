@@ -516,7 +516,7 @@ var LoggingConsole = function (_React$Component5) {
                 ),
                 React.createElement(
                     "div",
-                    null,
+                    { id: "log-view" },
                     this.state.Log
                 )
             );

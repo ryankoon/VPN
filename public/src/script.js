@@ -397,7 +397,7 @@ class LoggingConsole extends React.Component {
             <div>
                 <button onClick={this.clearLog}>Clear Log</button>
                 <h3>Log:</h3>
-                <div>{this.state.Log}</div>
+                <div id="log-view">{this.state.Log}</div>
             </div>
         )
     }

@@ -33,7 +33,7 @@ function start(host, port, sharedSecret) {
             client = new net.Socket();
 
             client.on('data', data => {
-                App.webSocketSend("Client received data: " + data.toString('base64'));
+                App.webSocketSend("Client received data: " + data.toString('hex'));
 
                 //Decode message
                 if (data.byteLength < CODELEN) {
@@ -98,7 +98,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (client) {
-            App.webSocketSend("(client) Sending data:" + data.toString("base64"));
+            App.webSocketSend("(client) Sending data:" + data.toString("hex"));
             client.write(data, resolve);
         } else {
             let msg = "The client connection must be started first.";
@@ -222,7 +222,7 @@ function rcvAuth3(data) {
             App.webSocketSend("(client) Authentication passed. Nonce is correct");
             App.webSocketSend('(client) Secure channel established...');
             client_dh_secret = client_dh.computeSecret(dh_key_of_server);
-            App.webSocketSend('(client) Computed session key: ' + client_dh_secret);
+            App.webSocketSend('(client) Computed session key: ' + client_dh_secret.toString("hex"));
             forgetDHValues();
         } else {
             App.webSocketSend("(client) Authentication failed. Unexpected nonce");
@@ -239,7 +239,7 @@ function rcvAuth3(data) {
 
 function broadcastDHValuesToSend() {
     App.webSocketSend('----Values to send from client to server--->');
-    App.webSocketSend('Server nonce: ' + nonce_of_server);
+    App.webSocketSend('Server nonce: ' + nonce_of_server.toString("hex"));
     App.webSocketSend('Client nonce: ' + client_nonce.toString("hex"));
     App.webSocketSend('Client generator: ' + client_dh.getGenerator().toString("hex"));
     App.webSocketSend('Client prime: ' + client_dh.getPrime().toString("hex"));

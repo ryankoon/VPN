@@ -40,7 +40,7 @@ function start(host, port, sharedSecret) {
                 socket = listener;
 
                 listener.on('data', data => {
-                    App.webSocketSend("Server received data: " + data.toString('base64'));
+                    App.webSocketSend("Server received data: " + data.toString('hex'));
 
                     //Decode message
                     if (data.byteLength < CODELEN) {
@@ -94,7 +94,7 @@ function start(host, port, sharedSecret) {
 function send(data) {
     return new Promise((resolve, reject) => {
         if (socket) {
-            App.webSocketSend("(server) Sending data: " + data.toString("base64"));
+            App.webSocketSend("(server) Sending data: " + data.toString("hex"));
             socket.write(data, resolve);
         } else {
             let msg = "The server must be connected to a client first.";
@@ -267,7 +267,7 @@ function rcvAuth2(data) {
         let aes_raw = Buffer.from(aesWrapper.decrypt(Buffer.from(shared_secret, 'base64'), aes_msg.toString()), 'hex');
         let nonce_of_server_from_client = aes_raw.slice(0, 12);
 
-        App.webSocketSend('Encrypted data: ' + aes_raw);
+        App.webSocketSend('Encrypted data: ' + aes_raw.toString("hex"));
 
         App.webSocketSend('(server) Authenticating...');
 
@@ -281,11 +281,11 @@ function rcvAuth2(data) {
             let dh_key_of_client = aes_raw.slice(12, Number(aes_raw.byteLength));
 
             App.webSocketSend('---Decrypted response values received from client---');
-            App.webSocketSend('Client DH key: ' + dh_key_of_client);
+            App.webSocketSend('Client DH key: ' + dh_key_of_client.toString("hex"));
             App.webSocketSend('----------------------------------------------------');
 
             server_dh_secret = server_dh.computeSecret(dh_key_of_client);
-            App.webSocketSend('(server) Computed session key: ' + server_dh_secret);
+            App.webSocketSend('(server) Computed session key: ' + server_dh_secret.toString("hex"));
         } else {
             App.webSocketSend("(server) Authentication failed, nonce is incorrect");
             stop();
