@@ -1,6 +1,6 @@
 {
-  "name": "vpn",
-  "version": "1.0.0",
+  "name": "VPN",
+  "version": "3.0.0",
   "description": "A3 - CPEN 442",
   "main": "main.js",
   "dependencies": {
