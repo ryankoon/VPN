@@ -74,6 +74,7 @@ function start(host, port, sharedSecret) {
 
             client.on('close', () => {
                 client = undefined;
+                nextStep = CLIENT_STEPS.SERVER_CONNECT_WAIT;
                 App.webSocketSend('Client connection closed');
             });
 
@@ -160,14 +161,6 @@ function stop() {
             resolve();
         }
     });
-}
-
-function get32B(sdata) {
-    let buffer = Buffer.from(sdata);
-    if (buffer.byteLength > 32) {
-        return buffer.slice(0, 32);
-    }
-    return Buffer.from(sdata.padEnd(32, '0'));
 }
 
 function broadcastDHValuesReceived(dh_generator, dh_prime) {
@@ -309,7 +302,7 @@ function auth2_send() {
 function executeNextStep() {
     return new Promise((resolve, reject) => {
         if (nextStep === CLIENT_STEPS.SERVER_CONNECT_WAIT) {
-            App.webSocketSend('Please wait for a TCP connection to be established with the server.');
+            App.webSocketSend('Please wait for a TCP connection to be established with the server. Make sure a client connection is initialized.');
             resolve();
         } else if (nextStep === CLIENT_STEPS.AUTH_1_WAIT) {
             App.webSocketSend('Please wait for the server to initialize a Diffie-Hellman exchange (Auth-1).');

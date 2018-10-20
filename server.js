@@ -330,7 +330,7 @@ function rcvAuth2(data) {
 function executeNextStep() {
     return new Promise((resolve, reject) => {
         if (nextStep === SERVER_STEPS.CLIENT_CONNECT_WAIT) {
-            App.webSocketSend('Waiting for a TCP connection to be established with a client.');
+            App.webSocketSend('Waiting for a TCP connection to be established with a client. Make sure the server is started.');
             resolve();
         } else if (nextStep === SERVER_STEPS.AUTH_1) {
             auth1_Send();
