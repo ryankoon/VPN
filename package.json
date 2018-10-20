@@ -4,12 +4,12 @@
   "description": "A3 - CPEN 442",
   "main": "main.js",
   "dependencies": {
-    "babel-preset-react-app": "^3.1.2",
     "restify": "^7.2.1",
-    "ws": "^6.1.0",
-    "ajv": "^6.0.0"
+    "ws": "^6.1.0"
   },
   "devDependencies": {
+    "ajv": "^6.5.4",
+    "babel-preset-react-app": "^5.0.4",
     "electron": "^3.0.4",
     "electron-builder": "^20.28.4",
     "eslint": "^5.7.0",
