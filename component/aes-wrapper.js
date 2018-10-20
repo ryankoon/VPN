@@ -37,22 +37,22 @@ aesWrapper.encrypt = (key, iv, text) => {
 aesWrapper.decrypt = (key, text) => {
     let dec = '';
     let data = aesWrapper.separateVectorFromData(text);
-    App.webSocketSend("AES IV of the message: "+ data.iv);
+    App.webSocketSend("AES IV of the data: "+ data.iv);
     let cipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(data.iv, 'base64'));
     dec += cipher.update(Buffer.from(data.message, 'base64'), 'base64', 'hex');
     dec += cipher.final('hex');
     // sha265 implementation for integrity checking
-    App.webSocketSend("Checking message integrity...");
+    App.webSocketSend("Checking data integrity...");
     let hashedMessage = Buffer.from(dec,'hex');
     let message = " ";
     let hashValue = hashedMessage.slice(hashedMessage.byteLength - 32, hashedMessage.byteLength).toString('base64');
-    App.webSocketSend("SHA265 hash value of the message: " + hashValue);
+    App.webSocketSend("SHA265 hash value of the data: " + hashValue);
     message = hashedMessage.slice(0, hashedMessage.byteLength - 32);
     let computedHash = crypto.createHash('sha256').update(message).digest('base64');
     if(computedHash === hashValue){
         App.webSocketSend("Integrity check completed, got expected hash value: " + computedHash);
     }else{
-        App.webSocketSend("The message was corrupted, expected hashed value: " + hashValue + "but get: " + computedHash);
+        App.webSocketSend("The data was corrupted, expected hashed value: " + hashValue + "but get: " + computedHash);
     }
     return message;
 };
@@ -62,11 +62,11 @@ aesWrapper.addIvToBody = (iv, encryptedBase64) => encryptedBase64 + iv.toString(
 
 aesWrapper.createAesMessage = (aesKey, message) => {
     let aesIv = aesWrapper.generateIv();
-    App.webSocketSend("AES IV: " + aesIv.toString('base64'));
+    App.webSocketSend("Using AES IV: " + aesIv.toString('base64'));
 
     // sha265 implementation for integrity checking
     let hashMessage = Buffer.from(crypto.createHash('sha256').update(message).digest('hex'),'hex');
-    App.webSocketSend("SHA265 hash value of the message  " + hashMessage.toString('base64'));
+    App.webSocketSend("SHA265 hash value of the data:  " + hashMessage.toString('base64'));
 
     //append sha265 hash value to the message
     let encryptedMessage = aesWrapper.encrypt(aesKey, aesIv, Buffer.concat([message,hashMessage]));

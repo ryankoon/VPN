@@ -221,7 +221,7 @@ function auth1_Send() {
 }
 
 function broadcastDHValuesToConfirm() {
-    App.webSocketSend('####Server private key/Secret exponent (b)####');
+    App.webSocketSend('####Server DH private key/Secret exponent (b)####');
     App.webSocketSend(server_dh.getPrivateKey("hex"));
     App.webSocketSend('#######################################');
     App.webSocketSend('----Values to send from server to client--->');
@@ -234,9 +234,12 @@ function prepareAuth3() {
     //Send Auth3 - server send E(Ra nonce, g^b mod p)
     if (nonce_of_client && server_dh_key) {
         App.webSocketSend('(server) Preparing auth-3 encryption...');
+        broadcastDHValuesToConfirm();
+        App.webSocketSend("####Encrypt data with AES-256-CBC-SHA256 ####");
         let auth3 = aesWrapper.createAesMessage(Buffer.from(shared_secret, 'base64'), Buffer.concat([nonce_of_client, server_dh_key]));
         auth3_buffer = Buffer.concat([Buffer.from('302'), Buffer.from(auth3)]);
-        broadcastDHValuesToConfirm();
+        App.webSocketSend("Encrypted data: " + auth3_buffer.toString('hex'));
+        App.webSocketSend("#######################################");
         nextStep = SERVER_STEPS.AUTH_3;
         App.broadcastContinueHint();
     } else {

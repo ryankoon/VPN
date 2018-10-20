@@ -224,7 +224,7 @@ function rcvAuth3(data) {
         let nonce_of_client_from_server = aes_raw2.slice(0, NONCELEN);
         let dh_key_of_server = aes_raw2.slice(NONCELEN, Number(aes_raw2.byteLength));
 
-        App.webSocketSend('Dencrypted data: ' + aes_raw2.toString("hex"));
+        App.webSocketSend('Decrypted data: ' + aes_raw2.toString("hex"));
 
         App.webSocketSend('(client) Authenticating...');
 
@@ -253,11 +253,11 @@ function rcvAuth3(data) {
 }
 
 function broadcastDHValuesToSend() {
-    App.webSocketSend('####Client private key/Secret exponent (a)####');
+    App.webSocketSend('####Client DH private key/Secret exponent (a)####');
     App.webSocketSend(client_dh.getPrivateKey("hex"));
-    App.webSocketSend('#######################################');
     App.webSocketSend('Using generator (g): ' + client_dh.getGenerator("hex"));
     App.webSocketSend('Using prime (p): ' + client_dh.getPrime("hex"));
+    App.webSocketSend('#######################################');
     App.webSocketSend('----Values to send from client to server--->');
     App.webSocketSend('Client nonce (Ra): ' + client_nonce.toString("hex"));
     App.webSocketSend('Server nonce (Rb): ' + nonce_of_server.toString("hex"));
@@ -268,9 +268,13 @@ function broadcastDHValuesToSend() {
 function auth2_prepare() {
     //Send Auth2 - client send Ra and E(Rb nonce, g^a mod p)
     if (nonce_of_server && client_dh_key) {
+        App.webSocketSend("(client) Preparing auth-2 encryption...");
+        broadcastDHValuesToSend();
+        App.webSocketSend("####Encrypt data with AES-256-CBC-SHA256 ####");
         let auth2 = aesWrapper.createAesMessage(Buffer.from(shared_secret, 'base64'), Buffer.concat([nonce_of_server, client_dh_key]));
         auth2_buffer = Buffer.concat([Buffer.from('101'), client_nonce, Buffer.from(auth2)]);
-        broadcastDHValuesToSend();
+        App.webSocketSend("Encrypted data: " + auth2_buffer.toString('hex'));
+        App.webSocketSend("#######################################");
         nextStep = CLIENT_STEPS.AUTH_2;
         App.broadcastContinueHint();
     } else {
